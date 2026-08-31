@@ -34,4 +34,12 @@ A primeira versão no GitHub preserva a estrutura pública atual antes das próx
 
 ## Deploy
 
-O projeto é estático e pode ser publicado diretamente na Vercel.
+Hospedagem principal planejada: **Netlify**.
+
+- Fonte do código: GitHub (`main`)
+- Publish directory: `.`
+- Build command: nenhum (site HTML/CSS/JS estático)
+- Configuração: `netlify.toml`
+- Deploy automático: a cada push no `main`, após o repositório ser conectado ao Netlify
+
+O GitHub continua sendo a fonte oficial do código e histórico de versões.
