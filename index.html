@@ -9,58 +9,153 @@
 </head>
 <body>
   <div class="toast" id="toast"></div>
+
   <main class="app">
-    <section class="panel status">
-      <div class="status-top">
-        <div>
-          <div class="kicker">◆ SISTEMA</div>
-          <div class="muted tiny">STATUS DO JOGADOR</div>
-          <h1>Luid</h1>
-          <div class="muted">Objetivo: Evolução completa</div>
+    <section class="view active-view" id="view-missao" data-view="missao">
+      <section class="panel status">
+        <div class="status-top">
+          <div>
+            <div class="kicker">◆ SISTEMA</div>
+            <div class="muted tiny">STATUS DO JOGADOR</div>
+            <h1>Luid</h1>
+            <div class="muted">Objetivo: Evolução completa</div>
+          </div>
+          <div class="rank"><b>E</b><small>Despertar em curso</small></div>
         </div>
-        <div class="rank"><b>E</b><small>Despertar em curso</small></div>
-      </div>
-      <div class="level-row"><div class="level">LV.01</div><div class="xp-text">EXPERIÊNCIA 65 / 100 XP</div></div>
-      <div class="progress"><div style="width:65%"></div></div>
-      <div class="status-meta"><span class="pill">Sequência: 0 dias</span><span class="pill">Protocolo ativo</span></div>
-      <div class="system-msg"><div class="kicker">◆ SISTEMA</div><p>Uma nova missão foi designada. A evolução começa com a primeira ação.</p></div>
+        <div class="level-row"><div class="level">LV.01</div><div class="xp-text">EXPERIÊNCIA 65 / 100 XP</div></div>
+        <div class="progress"><div style="width:65%"></div></div>
+        <div class="status-meta"><span class="pill">Sequência: 0 dias</span><span class="pill">Protocolo ativo</span></div>
+        <div class="system-msg"><div class="kicker">◆ SISTEMA</div><p>Uma nova missão foi designada. A evolução começa com a primeira ação.</p></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="kicker">CAMPANHA ATIVA · CAPÍTULO 01</div><h2>Fundação</h2></div><small>0 / 5</small></div>
+        <div class="card">
+          <div class="campaign-top"><strong>Conclua 5 missões para encerrar este capítulo.</strong><div class="next">PRÓXIMA MISSÃO:<br>Treino B — Puxar</div></div>
+          <div class="progress"><div style="width:0%"></div></div>
+          <div class="attributes">
+            <div class="attr"><b>3</b><span>Força</span></div><div class="attr"><b>3</b><span>Resistência</span></div>
+            <div class="attr"><b>2</b><span>Mobilidade</span></div><div class="attr"><b>4</b><span>Disciplina</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="kicker">HOJE</div><h2>Missão diária</h2></div><button class="recalc" id="recalcBtn">RECALCULAR</button></div>
+        <div class="panel mission">
+          <div class="mission-title"><div><div class="kicker">MISSÃO DIÁRIA · RANK E</div><h2>Peito em foco</h2></div><div class="xp">+96 XP</div></div>
+          <div class="structure">Estrutura: 3 Peito · 1 Ombro · 2 Tríceps</div>
+          <div id="exerciseList"></div>
+          <button class="start" id="startBtn">INICIAR MISSÃO</button>
+          <p class="safety">Regra do Sistema: sinais incomuns de mal-estar encerram a missão. Recuperação também é evolução.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="kicker">MISSÕES SECUNDÁRIAS</div><h2>Ações de suporte</h2></div><small>+5 XP</small></div>
+        <p class="muted note">São opcionais. Elas reforçam rotina e recuperação; não substituem a missão principal.</p>
+        <div class="support-grid">
+          <div class="card support"><div><strong>◆ Exploração leve</strong><p>10 min de caminhada no seu ritmo.</p></div><button>ATIVAR</button></div>
+          <div class="card support"><div><strong>◆ Ritual de mobilidade</strong><p>5 min de mobilidade leve, sem forçar amplitude.</p></div><button>ATIVAR</button></div>
+          <div class="card support"><div><strong>◆ Protocolo de hidratação</strong><p>Faça uma pausa consciente para beber água.</p></div><button>ATIVAR</button></div>
+        </div>
+      </section>
     </section>
 
-    <section class="section">
-      <div class="section-head"><div><div class="kicker">CAMPANHA ATIVA · CAPÍTULO 01</div><h2>Fundação</h2></div><small>0 / 5</small></div>
-      <div class="card">
-        <div class="campaign-top"><strong>Conclua 5 missões para encerrar este capítulo.</strong><div class="next">PRÓXIMA MISSÃO:<br>Treino B — Puxar</div></div>
+    <section class="view" id="view-plano" data-view="plano" hidden>
+      <header class="screen-head">
+        <div class="kicker">◆ PROTOCOLO ATIVO</div>
+        <h1>Plano</h1>
+        <p class="muted">Visão do caminho atual. O Sistema ajusta as próximas missões a partir do que for registrado.</p>
+      </header>
+
+      <section class="panel screen-panel">
+        <div class="screen-row"><div><span class="screen-label">CAPÍTULO ATUAL</span><strong>Fundação</strong></div><div class="screen-value">0 / 5</div></div>
         <div class="progress"><div style="width:0%"></div></div>
-        <div class="attributes">
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="kicker">SEQUÊNCIA DO SISTEMA</div><h2>Missões planejadas</h2></div></div>
+        <div class="protocol-list">
+          <article class="card protocol-item current"><div class="protocol-index">01</div><div><span class="tag">MISSÃO ATUAL</span><strong>Peito em foco</strong><p>3 Peito · 1 Ombro · 2 Tríceps</p></div><span class="protocol-state">ATIVA</span></article>
+          <article class="card protocol-item"><div class="protocol-index">02</div><div><span class="tag">PRÓXIMA MISSÃO</span><strong>Treino B — Puxar</strong><p>Será liberado conforme a progressão do capítulo.</p></div><span class="protocol-state muted-state">AGUARDA</span></article>
+          <article class="card protocol-item locked"><div class="protocol-index">03</div><div><span class="tag">MISSÃO POSTERIOR</span><strong>Definida pelo Sistema</strong><p>O conteúdo será ajustado usando seus registros de execução.</p></div><span class="protocol-state muted-state">BLOQUEADA</span></article>
+        </div>
+      </section>
+
+      <div class="system-msg"><div class="kicker">◆ REGRA DO SISTEMA</div><p>O plano não é uma lista fixa. Ele deve evoluir com desempenho, disponibilidade e capacidade registrada.</p></div>
+    </section>
+
+    <section class="view" id="view-progresso" data-view="progresso" hidden>
+      <header class="screen-head">
+        <div class="kicker">◆ LEITURA DE EVOLUÇÃO</div>
+        <h1>Progresso</h1>
+        <p class="muted">Seu progresso será consolidado a partir das missões concluídas e dos resultados registrados.</p>
+      </header>
+
+      <section class="panel screen-panel">
+        <div class="level-row compact"><div class="level">LV.01</div><div class="xp-text">65 / 100 XP</div></div>
+        <div class="progress"><div style="width:65%"></div></div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="kicker">ATRIBUTOS</div><h2>Estado atual</h2></div><small>RANK E</small></div>
+        <div class="attributes progress-attributes">
           <div class="attr"><b>3</b><span>Força</span></div><div class="attr"><b>3</b><span>Resistência</span></div>
           <div class="attr"><b>2</b><span>Mobilidade</span></div><div class="attr"><b>4</b><span>Disciplina</span></div>
         </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="kicker">HISTÓRICO</div><h2>Leituras recentes</h2></div></div>
+        <div class="card empty-state"><div class="empty-icon">◇</div><strong>Nenhuma missão concluída ainda.</strong><p>Após os primeiros registros, o Sistema poderá comparar desempenho e mostrar evolução real.</p></div>
+      </section>
+    </section>
+
+    <section class="view" id="view-codex" data-view="codex" hidden>
+      <header class="screen-head">
+        <div class="kicker">◆ CODEX</div>
+        <h1>Codex</h1>
+        <p class="muted">Conhecimento de suporte do Sistema. Não é uma biblioteca de exercícios aberta.</p>
+      </header>
+
+      <div class="codex-grid">
+        <article class="card codex-card"><span class="tag">PROTOCOLO</span><strong>Como funciona a progressão</strong><p>Registro → interpretação → adaptação → nova missão.</p></article>
+        <article class="card codex-card"><span class="tag">ATRIBUTOS</span><strong>Força, resistência e disciplina</strong><p>Indicadores do seu estado atual dentro do Sistema.</p></article>
+        <article class="card codex-card locked"><span class="tag">CONTEÚDO BLOQUEADO</span><strong>Novas leituras</strong><p>Mais informações aparecem conforme sua jornada avança.</p></article>
       </div>
     </section>
 
-    <section class="section">
-      <div class="section-head"><div><div class="kicker">HOJE</div><h2>Missão diária</h2></div><button class="recalc" id="recalcBtn">RECALCULAR</button></div>
-      <div class="panel mission">
-        <div class="mission-title"><div><div class="kicker">MISSÃO DIÁRIA · RANK E</div><h2>Peito em foco</h2></div><div class="xp">+96 XP</div></div>
-        <div class="structure">Estrutura: 3 Peito · 1 Ombro · 2 Tríceps</div>
-        <div id="exerciseList"></div>
-        <button class="start" id="startBtn">INICIAR MISSÃO</button>
-        <p class="safety">Regra do Sistema: sinais incomuns de mal-estar encerram a missão. Recuperação também é evolução.</p>
-      </div>
-    </section>
+    <section class="view" id="view-perfil" data-view="perfil" hidden>
+      <header class="screen-head">
+        <div class="kicker">◆ IDENTIFICAÇÃO DO JOGADOR</div>
+        <h1>Perfil</h1>
+        <p class="muted">Dados usados pelo Sistema para orientar as missões.</p>
+      </header>
 
-    <section class="section">
-      <div class="section-head"><div><div class="kicker">MISSÕES SECUNDÁRIAS</div><h2>Ações de suporte</h2></div><small>+5 XP</small></div>
-      <p class="muted note">São opcionais. Elas reforçam rotina e recuperação; não substituem a missão principal.</p>
-      <div class="support-grid">
-        <div class="card support"><div><strong>◆ Exploração leve</strong><p>10 min de caminhada no seu ritmo.</p></div><button>ATIVAR</button></div>
-        <div class="card support"><div><strong>◆ Ritual de mobilidade</strong><p>5 min de mobilidade leve, sem forçar amplitude.</p></div><button>ATIVAR</button></div>
-        <div class="card support"><div><strong>◆ Protocolo de hidratação</strong><p>Faça uma pausa consciente para beber água.</p></div><button>ATIVAR</button></div>
-      </div>
+      <section class="panel profile-panel">
+        <div class="profile-rank">E</div>
+        <div><span class="screen-label">JOGADOR</span><strong class="profile-name">Luid</strong><p>Objetivo: Evolução completa</p></div>
+      </section>
+
+      <section class="section">
+        <div class="data-list">
+          <div class="card data-row"><span>Status</span><strong>Protocolo ativo</strong></div>
+          <div class="card data-row"><span>Nível</span><strong>LV.01</strong></div>
+          <div class="card data-row"><span>Rank atual</span><strong>E</strong></div>
+          <div class="card data-row"><span>Sequência</span><strong>0 dias</strong></div>
+        </div>
+      </section>
     </section>
   </main>
 
-  <nav class="nav"><button class="active">MISSÃO</button><button>PLANO</button><button>PROGRESSO</button><button>CODEX</button><button>PERFIL</button></nav>
+  <nav class="nav" aria-label="Navegação principal">
+    <button class="active" data-target="missao" aria-label="Abrir Missão">MISSÃO</button>
+    <button data-target="plano" aria-label="Abrir Plano">PLANO</button>
+    <button data-target="progresso" aria-label="Abrir Progresso">PROGRESSO</button>
+    <button data-target="codex" aria-label="Abrir Codex">CODEX</button>
+    <button data-target="perfil" aria-label="Abrir Perfil">PERFIL</button>
+  </nav>
   <script src="app.js"></script>
 </body>
 </html>
