@@ -608,3 +608,7 @@ document.querySelectorAll('[data-reason]').forEach(button=>button.addEventListen
 renderProfile();
 const initialTarget=location.hash.replace('#','').toLowerCase();
 openView(validViews.includes(initialTarget)?initialTarget:'missao',{updateHash:false,scroll:false});
+
+const volumeEngineScript=document.createElement('script');
+volumeEngineScript.src='volume-engine.js';
+document.body.appendChild(volumeEngineScript);
