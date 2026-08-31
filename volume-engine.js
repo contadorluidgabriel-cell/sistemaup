@@ -210,4 +210,9 @@ document.head.appendChild(volumeStyles);
 
 const prescriptionEngineScript=document.createElement('script');
 prescriptionEngineScript.src='prescription-engine.js';
+prescriptionEngineScript.onload=()=>{
+  const executionEngineScript=document.createElement('script');
+  executionEngineScript.src='execution-engine.js';
+  document.body.appendChild(executionEngineScript);
+};
 document.body.appendChild(prescriptionEngineScript);
