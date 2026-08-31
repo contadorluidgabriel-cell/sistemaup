@@ -42,6 +42,8 @@ const defaultProfile={
   frequency:'',
   duration:'',
   experience:'',
+  primaryFocus:'Equilibrado',
+  secondaryFocus:'Nenhum',
   equipment:[],
   complement:'Nenhuma',
   complementFrequency:'',
@@ -78,6 +80,52 @@ function complementLabel(){
   return `${profile.complement}${profile.complementFrequency?` · ${profile.complementFrequency}x/sem`:''}`;
 }
 
+function normalizedFocus(source=profile){
+  const primary=source.primaryFocus||'Equilibrado';
+  let secondary=source.secondaryFocus||'Nenhum';
+  if(primary==='Equilibrado'||secondary===primary)secondary='Nenhum';
+  return {primary,secondary};
+}
+
+function focusModel(source=profile){
+  const {primary,secondary}=normalizedFocus(source);
+  const experience=source.experience||'';
+
+  if(primary==='Equilibrado'){
+    return {
+      cycle:'BASE GLOBAL',
+      pill:'Ênfase: equilibrada',
+      primaryDisplay:'Desenvolvimento equilibrado',
+      primaryReason:'Nenhum grupo recebe especialização adicional. O planejamento preserva desenvolvimento global.',
+      secondaryDisplay:'Nenhuma',
+      secondaryReason:'Uma prioridade secundária só é usada quando existir uma prioridade principal clara.',
+      rule:'Sem prioridade específica, o Sistema distribui o trabalho conforme objetivo, experiência, rotina e resposta registrada.'
+    };
+  }
+
+  if(experience==='Iniciante'||!experience){
+    return {
+      cycle:experience==='Iniciante'?'BASE + ÊNFASE':'ÊNFASE PENDENTE',
+      pill:`Ênfase: ${primary.toLowerCase()}`,
+      primaryDisplay:primary,
+      primaryReason:experience==='Iniciante'?`Preferência por ${primary.toLowerCase()} registrada. Como a base ainda está sendo construída, a ênfase deve ser controlada sem abandonar os demais grupos.`:`Preferência por ${primary.toLowerCase()} registrada. A intensidade da ênfase será definida quando a experiência estiver configurada.`,
+      secondaryDisplay:secondary,
+      secondaryReason:secondary==='Nenhum'?'Nenhuma prioridade secundária ativa.':`${secondary} pode receber atenção complementar sem competir com ${primary.toLowerCase()}.`,
+      rule:'Na fase inicial, prioridade muscular significa atenção adicional e melhor distribuição — não especialização agressiva nem volume excessivo.'
+    };
+  }
+
+  return {
+    cycle:'ÊNFASE ATIVA',
+    pill:`Ênfase: ${primary.toLowerCase()}`,
+    primaryDisplay:primary,
+    primaryReason:`${primary} será considerado primeiro na distribuição semanal, na frequência de estímulos e no acompanhamento de progressão.`,
+    secondaryDisplay:secondary,
+    secondaryReason:secondary==='Nenhum'?'Nenhuma prioridade secundária ativa.':`${secondary} recebe atenção complementar, abaixo da prioridade de ${primary.toLowerCase()}.`,
+    rule:'A ênfase altera distribuição, frequência, ordem e monitoramento. O Sistema não aumenta séries indefinidamente e mantém os demais grupos treinados.'
+  };
+}
+
 function profileCompleteness(){
   const checks=[profile.goal,profile.frequency,profile.duration,profile.experience,profile.equipment.length];
   return checks.filter(Boolean).length;
@@ -85,23 +133,37 @@ function profileCompleteness(){
 
 function renderProfile(){
   const name=safeText(profile.name,'Jogador');
+  const focus=focusModel(profile);
+  const {primary,secondary}=normalizedFocus(profile);
+
   qs('playerNameDisplay').textContent=name;
   qs('profileNameDisplay').textContent=name;
   qs('objectiveSummary').textContent=safeText(profile.goal,'não definido').toLowerCase();
   qs('profileObjectiveDisplay').textContent=profile.goal?`Objetivo: ${profile.goal}`:'Objetivo ainda não definido';
   qs('availabilityPill').textContent=profile.frequency?`Rotina: ${profile.frequency}x/sem`:'Rotina: configurar';
+  qs('focusPill').textContent=focus.pill;
 
   qs('planGoal').textContent=safeText(profile.goal);
   qs('planFrequency').textContent=frequencyLabel(profile.frequency);
   qs('planDuration').textContent=safeText(profile.duration,'Configurar');
   qs('planExperience').textContent=safeText(profile.experience,'Configurar');
+  qs('planPrimaryFocus').textContent=primary==='Equilibrado'?'Desenvolvimento equilibrado':primary;
+  qs('planSecondaryFocus').textContent=secondary;
   qs('planEquipment').textContent=equipmentLabel(profile.equipment);
   qs('planComplement').textContent=complementLabel();
+
+  qs('focusCycleState').textContent=focus.cycle;
+  qs('focusPrimaryDisplay').textContent=focus.primaryDisplay;
+  qs('focusPrimaryReason').textContent=focus.primaryReason;
+  qs('focusSecondaryDisplay').textContent=focus.secondaryDisplay;
+  qs('focusSecondaryReason').textContent=focus.secondaryReason;
+  qs('focusSystemRule').innerHTML=`<div class="kicker">◆ REGRA DO SISTEMA</div><p>${focus.rule}</p>`;
 
   const complete=profileCompleteness();
   const reading=qs('systemReading');
   if(complete===5){
-    reading.innerHTML=`<div class="kicker">◆ LEITURA DO SISTEMA</div><p>Contexto sincronizado. As próximas decisões poderão considerar objetivo, ${profile.frequency} dias de musculação, ${profile.duration.toLowerCase()} por sessão e os equipamentos realmente disponíveis.</p>`;
+    const focusPhrase=primary==='Equilibrado'?'desenvolvimento muscular equilibrado':`prioridade em ${primary.toLowerCase()}`;
+    reading.innerHTML=`<div class="kicker">◆ LEITURA DO SISTEMA</div><p>Contexto sincronizado. As próximas decisões poderão considerar objetivo, ${profile.frequency} dias de musculação, ${profile.duration.toLowerCase()} por sessão, ${focusPhrase} e os equipamentos realmente disponíveis.</p>`;
   }else{
     reading.innerHTML=`<div class="kicker">◆ LEITURA DO SISTEMA</div><p>Configuração ${complete}/5 concluída. Complete objetivo, rotina, tempo, experiência e equipamentos para reduzir prescrições genéricas.</p>`;
   }
@@ -126,24 +188,70 @@ function renderProfile(){
     qs('profileFrequency').value=profile.frequency||'';
     qs('profileDuration').value=profile.duration||'';
     qs('profileExperience').value=profile.experience||'';
+    qs('profilePrimaryFocus').value=primary;
+    qs('profileSecondaryFocus').value=secondary;
     qs('profileComplement').value=profile.complement||'Nenhuma';
     qs('profileComplementFrequency').value=profile.complementFrequency||'';
     qs('profileNotes').value=profile.notes||'';
     document.querySelectorAll('input[name="equipment"]').forEach(input=>{
       input.checked=profile.equipment.includes(input.value);
     });
+    updateFocusPreview();
   }
 }
+
+function updateFocusPreview(){
+  const note=qs('profileFocusNote');
+  if(!note)return;
+  const experience=qs('profileExperience')?.value||'';
+  const primary=qs('profilePrimaryFocus')?.value||'Equilibrado';
+  const secondary=qs('profileSecondaryFocus')?.value||'Nenhum';
+
+  if(primary==='Equilibrado'){
+    note.textContent=secondary!=='Nenhum'?'Escolha uma prioridade principal antes de definir uma secundária.':'Sem prioridade específica: o Sistema preserva desenvolvimento global.';
+    return;
+  }
+  if(secondary===primary){
+    note.textContent='A prioridade secundária precisa ser diferente da principal.';
+    return;
+  }
+  if(experience==='Iniciante'){
+    note.textContent=`${primary} foi marcada como preferência. Na fase inicial, a base global continua sendo prioridade e a ênfase será controlada.`;
+    return;
+  }
+  if(!experience){
+    note.textContent=`Prioridade em ${primary.toLowerCase()} registrada. Configure a experiência para o Sistema definir como tratar essa ênfase.`;
+    return;
+  }
+  note.textContent=`Ênfase em ${primary.toLowerCase()}${secondary!=='Nenhum'?`, com ${secondary.toLowerCase()} como prioridade secundária`:''}. O volume exato será decidido pelo motor de treino e pela resposta registrada.`;
+}
+
+['profileExperience','profilePrimaryFocus','profileSecondaryFocus'].forEach(id=>qs(id)?.addEventListener('change',updateFocusPreview));
 
 qs('profileForm')?.addEventListener('submit',event=>{
   event.preventDefault();
   const equipment=[...document.querySelectorAll('input[name="equipment"]:checked')].map(input=>input.value);
+  const primaryFocus=qs('profilePrimaryFocus').value||'Equilibrado';
+  let secondaryFocus=qs('profileSecondaryFocus').value||'Nenhum';
+  let adjustedFocus=false;
+
+  if(primaryFocus==='Equilibrado'&&secondaryFocus!=='Nenhum'){
+    secondaryFocus='Nenhum';
+    adjustedFocus=true;
+  }
+  if(primaryFocus!=='Equilibrado'&&secondaryFocus===primaryFocus){
+    secondaryFocus='Nenhum';
+    adjustedFocus=true;
+  }
+
   profile={
     name:qs('profileName').value.trim()||'Jogador',
     goal:qs('profileGoal').value,
     frequency:qs('profileFrequency').value,
     duration:qs('profileDuration').value,
     experience:qs('profileExperience').value,
+    primaryFocus,
+    secondaryFocus,
     equipment,
     complement:qs('profileComplement').value||'Nenhuma',
     complementFrequency:qs('profileComplementFrequency').value,
@@ -151,7 +259,7 @@ qs('profileForm')?.addEventListener('submit',event=>{
   };
   localStorage.setItem(PROFILE_KEY,JSON.stringify(profile));
   renderProfile();
-  toast('Contexto do jogador atualizado.');
+  toast(adjustedFocus?'Contexto salvo. Prioridade secundária inválida foi removida.':'Contexto do jogador atualizado.');
 });
 
 const validViews=['missao','plano','progresso','codex','perfil'];
