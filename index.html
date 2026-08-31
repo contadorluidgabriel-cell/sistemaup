@@ -28,6 +28,7 @@
           <span class="pill">Sequência: 0 dias</span>
           <span class="pill">Protocolo ativo</span>
           <span class="pill" id="availabilityPill">Rotina: configurar</span>
+          <span class="pill" id="focusPill">Ênfase: equilibrada</span>
         </div>
         <div class="system-msg" id="systemReading"><div class="kicker">◆ LEITURA DO SISTEMA</div><p>Complete sua configuração para que as próximas missões considerem sua realidade.</p></div>
       </section>
@@ -79,9 +80,28 @@
           <div class="context-cell"><span>MUSCULAÇÃO</span><strong id="planFrequency">Configurar</strong></div>
           <div class="context-cell"><span>TEMPO / SESSÃO</span><strong id="planDuration">Configurar</strong></div>
           <div class="context-cell"><span>EXPERIÊNCIA</span><strong id="planExperience">Configurar</strong></div>
+          <div class="context-cell"><span>PRIORIDADE</span><strong id="planPrimaryFocus">Equilibrado</strong></div>
+          <div class="context-cell"><span>ÊNFASE SECUNDÁRIA</span><strong id="planSecondaryFocus">Nenhuma</strong></div>
           <div class="context-cell wide"><span>EQUIPAMENTOS</span><strong id="planEquipment">Configurar</strong></div>
           <div class="context-cell wide"><span>COMPLEMENTAR</span><strong id="planComplement">Nenhum</strong></div>
         </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="kicker">ÊNFASE MUSCULAR</div><h2>Prioridade atual</h2></div><small id="focusCycleState">BASE GLOBAL</small></div>
+        <div class="focus-grid">
+          <article class="card focus-card primary-focus">
+            <span class="screen-label">PRIORIDADE PRINCIPAL</span>
+            <strong id="focusPrimaryDisplay">Desenvolvimento equilibrado</strong>
+            <p id="focusPrimaryReason">Nenhum grupo recebe especialização adicional.</p>
+          </article>
+          <article class="card focus-card">
+            <span class="screen-label">PRIORIDADE SECUNDÁRIA</span>
+            <strong id="focusSecondaryDisplay">Nenhuma</strong>
+            <p id="focusSecondaryReason">Opcional. Nunca deve competir com a prioridade principal.</p>
+          </article>
+        </div>
+        <div class="system-msg focus-rule" id="focusSystemRule"><div class="kicker">◆ REGRA DO SISTEMA</div><p>Prioridade muscular altera distribuição, frequência e ordem dos estímulos; não significa acumular séries sem limite.</p></div>
       </section>
 
       <section class="section">
@@ -89,7 +109,7 @@
         <div class="protocol-list">
           <article class="card protocol-item current"><div class="protocol-index">01</div><div><span class="tag">MISSÃO ATUAL</span><strong>Peito em foco</strong><p>Missão principal de musculação.</p></div><span class="protocol-state">ATIVA</span></article>
           <article class="card protocol-item"><div class="protocol-index">02</div><div><span class="tag">PRÓXIMA MISSÃO</span><strong>Treino B — Puxar</strong><p>Será refinado quando iniciarmos o motor de treino.</p></div><span class="protocol-state muted-state">AGUARDA</span></article>
-          <article class="card protocol-item locked"><div class="protocol-index">03</div><div><span class="tag">MISSÃO POSTERIOR</span><strong>Definida pelo Sistema</strong><p>Desempenho, rotina, equipamentos e recuperação influenciarão a próxima prescrição.</p></div><span class="protocol-state muted-state">BLOQUEADA</span></article>
+          <article class="card protocol-item locked"><div class="protocol-index">03</div><div><span class="tag">MISSÃO POSTERIOR</span><strong>Definida pelo Sistema</strong><p>Desempenho, rotina, equipamentos, prioridade muscular e recuperação influenciarão a próxima prescrição.</p></div><span class="protocol-state muted-state">BLOQUEADA</span></article>
         </div>
       </section>
 
@@ -140,7 +160,8 @@
 
       <div class="codex-grid">
         <article class="card codex-card"><span class="tag">NÚCLEO</span><strong>Musculação primeiro</strong><p>Planejar → executar → registrar → interpretar → adaptar.</p></article>
-        <article class="card codex-card"><span class="tag">PERSONALIZAÇÃO</span><strong>O usuário define o contexto</strong><p>Objetivo, rotina, experiência e equipamentos moldam o planejamento.</p></article>
+        <article class="card codex-card"><span class="tag">PERSONALIZAÇÃO</span><strong>O usuário define o contexto</strong><p>Objetivo, rotina, experiência, equipamentos e prioridades moldam o planejamento.</p></article>
+        <article class="card codex-card"><span class="tag">ÊNFASE</span><strong>Prioridade não é excesso</strong><p>Um grupo prioritário pode receber melhor distribuição e acompanhamento sem abandonar o desenvolvimento global.</p></article>
         <article class="card codex-card"><span class="tag">COMPLEMENTAR</span><strong>Aeróbico quando fizer sentido</strong><p>Corrida, caminhada, bike ou HIIT podem apoiar o objetivo sem competir com a musculação.</p></article>
         <article class="card codex-card locked"><span class="tag">CONTEÚDO BLOQUEADO</span><strong>Novas leituras</strong><p>Mais informações aparecem conforme a jornada e o histórico avançam.</p></article>
       </div>
@@ -168,6 +189,16 @@
             <label class="field"><span>Tempo disponível / sessão</span><select id="profileDuration"><option value="">Selecionar</option><option>20–30 min</option><option>30–45 min</option><option>45–60 min</option><option>60+ min</option><option>Variável</option></select></label>
           </div>
           <label class="field"><span>Experiência com musculação</span><select id="profileExperience"><option value="">Selecionar</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></label>
+
+          <fieldset class="field focus-fieldset">
+            <legend>Prioridade muscular</legend>
+            <p>Escolha no máximo uma prioridade principal e uma secundária. Desenvolvimento equilibrado continua disponível.</p>
+            <div class="field-grid">
+              <label class="field"><span>Prioridade principal</span><select id="profilePrimaryFocus"><option value="Equilibrado">Desenvolvimento equilibrado</option><option>Peito</option><option>Costas</option><option>Ombros</option><option>Braços</option><option>Quadríceps</option><option>Posteriores</option><option>Glúteos</option><option>Panturrilhas</option></select></label>
+              <label class="field"><span>Prioridade secundária</span><select id="profileSecondaryFocus"><option value="Nenhum">Nenhuma</option><option>Peito</option><option>Costas</option><option>Ombros</option><option>Braços</option><option>Quadríceps</option><option>Posteriores</option><option>Glúteos</option><option>Panturrilhas</option></select></label>
+            </div>
+            <div class="focus-preview" id="profileFocusNote">Sem prioridade específica: o Sistema preserva desenvolvimento global.</div>
+          </fieldset>
 
           <fieldset class="field equipment-fieldset"><legend>Equipamentos disponíveis</legend><p>Marque somente o que realmente consegue usar no treino.</p>
             <div class="check-grid">
