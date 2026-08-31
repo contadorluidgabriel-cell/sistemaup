@@ -207,3 +207,7 @@ document.head.appendChild(volumeStyles);
   render();
   document.getElementById('profileForm')?.addEventListener('submit',()=>setTimeout(render,0));
 })();
+
+const prescriptionEngineScript=document.createElement('script');
+prescriptionEngineScript.src='prescription-engine.js';
+document.body.appendChild(prescriptionEngineScript);
