@@ -94,6 +94,9 @@ document.head.appendChild(executionStyles);
     if(current.discomfort==='significant'){
       return {state:'ADAPTAR',text:'Desconforto relevante registrado. Não progredir este exercício; reavaliar execução, variação e necessidade de orientação profissional antes da próxima exposição.'};
     }
+    if(current.discomfort==='mild'){
+      return {state:'OBSERVAR',text:'Incômodo leve registrado. Mantenha a dificuldade e observe a próxima exposição; não aumentar carga enquanto o desconforto persistir.'};
+    }
     if(reachedTop&&previousTop){
       const hasNumeric=current.sets.some(set=>numericLoad(set.load)!==null);
       return {state:'PROGRESSÃO DISPONÍVEL',text:hasNumeric?'Topo da faixa confirmado em exposições consecutivas. Use o menor incremento de carga disponível e retorne à parte baixa da faixa de repetições.':'Topo da faixa confirmado em exposições consecutivas. Aumente a dificuldade pela menor progressão disponível sem perder técnica ou RIR planejado.'};
@@ -127,13 +130,13 @@ document.head.appendChild(executionStyles);
   }
 
   function setInputRow(exercise,setIndex,previousSet){
-    const previousLoad=previousSet?.load||'';
+    const previousLoad=String(previousSet?.load||'');
     return `<div class="set-log-row" data-set="${setIndex}">
       <span class="set-number">${setIndex+1}</span>
       <label><span>CARGA / RESIST.</span><input class="set-load" type="text" maxlength="18" placeholder="8 kg / médio / PC" value="${previousLoad.replace(/"/g,'&quot;')}" disabled></label>
       <label><span>REPS</span><input class="set-reps" type="number" inputmode="numeric" min="0" max="100" placeholder="—" disabled></label>
       <label><span>RIR</span><select class="set-rir" disabled><option value="">—</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-      <button class="set-done" type="button" aria-label="Concluir série ${setIndex+1}" disabled>✓</button>
+      <button class="set-done" type="button" aria-label="Concluir série ${setIndex+1}" disabled>○</button>
     </div>`;
   }
 
@@ -278,4 +281,5 @@ document.head.appendChild(executionStyles);
   }
 
   renderExecution();
+  document.getElementById('profileForm')?.addEventListener('submit',()=>setTimeout(renderExecution,120));
 })();
