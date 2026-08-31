@@ -253,15 +253,16 @@ document.head.appendChild(executionStyles);
 
         const exercises=[...list.querySelectorAll('.execution-exercise')].map(collectExercise);
         const priorHistory=history();
-        const recommendations={};
+        const recommendations={...readJSON(NEXT_KEY,{})};
         const readings=[];
+        const safetyStates=new Set(['ADAPTAR','OBSERVAR','RECUPERAR FAIXA']);
 
         exercises.forEach(exercise=>{
           const previous=exerciseExposures(exercise.id,1)[0];
           const recommendation=recommendationFor(exercise,previous,exercise.targetReps,exercise.targetRir);
           const comparison=compareExposure(exercise,previous);
           recommendations[exercise.id]={...recommendation,generatedAt:new Date().toISOString()};
-          readings.push({name:exercise.name,state:recommendation.state,text:comparison||recommendation.text});
+          readings.push({name:exercise.name,state:recommendation.state,text:safetyStates.has(recommendation.state)?recommendation.text:(comparison||recommendation.text)});
         });
 
         const record={
@@ -281,7 +282,7 @@ document.head.appendChild(executionStyles);
         button.disabled=true;
         list.querySelectorAll('input,select,button.set-done').forEach(control=>control.disabled=true);
 
-        const progressionCount=Object.values(recommendations).filter(item=>item.state==='PROGRESSÃO DISPONÍVEL').length;
+        const progressionCount=exercises.filter(exercise=>recommendations[exercise.id]?.state==='PROGRESSÃO DISPONÍVEL').length;
         const nextSession=sessions[(currentIndex+1)%sessions.length];
         document.getElementById('completionSummary').textContent=progressionCount?`${progressionCount} progressão(ões) disponível(is). Próxima missão: ${nextSession.label}.`:`Dados registrados. Próxima missão: ${nextSession.label}.`;
         document.getElementById('completionReadings').innerHTML=readings.slice(0,4).map(item=>`<article><span>${item.state}</span><strong>${item.name}</strong><p>${item.text}</p></article>`).join('');
