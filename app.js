@@ -1,3 +1,5 @@
+const screensStyles=document.createElement('link');screensStyles.rel='stylesheet';screensStyles.href='screens.css';document.head.appendChild(screensStyles);
+
 const exercises=[{n:'01',tag:'Preparação',name:'Ativação do jogador',detail:'8 min de mobilidade e caminhada leve',action:'MARCAR',xp:12,prep:true},{n:'02',tag:'Peito',name:'Flexão inclinada nos apoios',detail:'3 séries · 8–12 repetições · esforço moderado',action:'REGISTRAR',xp:16},{n:'03',tag:'Peito',name:'Supino no chão com halteres',detail:'3 séries · 8–12 repetições · esforço moderado',action:'REGISTRAR',xp:16},{n:'04',tag:'Peito',name:'Crucifixo com elástico',detail:'3 séries · 8–12 repetições · esforço moderado',action:'REGISTRAR',xp:16},{n:'05',tag:'Ombro',name:'Desenvolvimento com elástico',detail:'3 séries · 8–12 repetições · esforço moderado',action:'REGISTRAR',xp:12},{n:'06',tag:'Tríceps',name:'Extensão de tríceps com elástico',detail:'3 séries · 8–12 repetições · esforço moderado',action:'REGISTRAR',xp:12},{n:'07',tag:'Tríceps',name:'Extensão de tríceps com halter leve',detail:'3 séries · 8–12 repetições · esforço moderado',action:'REGISTRAR',xp:12}];
 
 const list=document.getElementById('exerciseList');
@@ -59,6 +61,11 @@ function openView(target,{updateHash=true,scroll=true}={}){
 navButtons.forEach(button=>button.addEventListener('click',()=>openView(button.dataset.target)));
 
 window.addEventListener('hashchange',()=>{
+  const target=location.hash.replace('#','').toLowerCase();
+  openView(validViews.includes(target)?target:'missao',{updateHash:false,scroll:true});
+});
+
+window.addEventListener('popstate',()=>{
   const target=location.hash.replace('#','').toLowerCase();
   openView(validViews.includes(target)?target:'missao',{updateHash:false,scroll:true});
 });
