@@ -5,6 +5,7 @@ document.head.appendChild(trainingExperienceStyles);
 
 (()=>{
   const CHECKIN_KEY='sistemaEvolucao.pendingCheckIn.v1';
+  const HISTORY_KEY='sistemaEvolucao.workoutHistory.v1';
   const readJSON=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}};
   const writeJSON=(key,value)=>localStorage.setItem(key,JSON.stringify(value));
 
@@ -20,6 +21,16 @@ document.head.appendChild(trainingExperienceStyles);
     el.classList.add('show');
     clearTimeout(toast.timer);
     toast.timer=setTimeout(()=>el.classList.remove('show'),2400);
+  }
+
+  function attachCheckInToLastWorkout(checkIn){
+    const records=readJSON(HISTORY_KEY,[]);
+    if(!Array.isArray(records)||!records.length)return;
+    const last=records[records.length-1];
+    const completedAt=new Date(last.completedAt||0).getTime();
+    if(!completedAt||Date.now()-completedAt>10000)return;
+    last.checkIn={...checkIn,durationSeconds:elapsedSeconds};
+    writeJSON(HISTORY_KEY,records);
   }
 
   function ensureCheckinModal(){
@@ -260,6 +271,8 @@ document.head.appendChild(trainingExperienceStyles);
     if(button.dataset.state==='active'){
       setTimeout(()=>{
         if(button.dataset.state==='done'){
+          const checkIn=readJSON(CHECKIN_KEY,null);
+          if(checkIn)attachCheckInToLastWorkout(checkIn);
           exitTrainingMode();
           setTimeout(()=>localStorage.removeItem(CHECKIN_KEY),500);
         }
