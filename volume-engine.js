@@ -216,6 +216,11 @@ prescriptionEngineScript.onload=()=>{
   executionEngineScript.onload=()=>{
     const exerciseHistoryScript=document.createElement('script');
     exerciseHistoryScript.src='exercise-history.js';
+    exerciseHistoryScript.onload=()=>{
+      const trainingExperienceScript=document.createElement('script');
+      trainingExperienceScript.src='training-experience.js';
+      document.body.appendChild(trainingExperienceScript);
+    };
     document.body.appendChild(exerciseHistoryScript);
   };
   document.body.appendChild(executionEngineScript);
