@@ -7,6 +7,7 @@ document.head.appendChild(executionStyles);
   const PLAN_KEY='sistemaEvolucao.trainingPlan.v1';
   const HISTORY_KEY='sistemaEvolucao.workoutHistory.v1';
   const NEXT_KEY='sistemaEvolucao.nextExerciseTargets.v1';
+  const SESSION_KEY='sistemaEvolucao.currentSessionIndex.v1';
 
   const readJSON=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}};
   const writeJSON=(key,value)=>localStorage.setItem(key,JSON.stringify(value));
@@ -126,6 +127,8 @@ document.head.appendChild(executionStyles);
     document.getElementById('closeCompletion')?.addEventListener('click',()=>{
       document.getElementById('completionModal').hidden=true;
       document.body.classList.remove('execution-modal-open');
+      renderExecution();
+      window.scrollTo({top:0,behavior:'smooth'});
     });
   }
 
@@ -199,12 +202,21 @@ document.head.appendChild(executionStyles);
 
   function renderExecution(){
     const plan=readJSON(PLAN_KEY,null);
-    const session=plan?.sessions?.[0];
+    const sessions=plan?.sessions||[];
     const list=document.getElementById('exerciseList');
-    if(!session||!list)return;
+    if(!sessions.length||!list)return;
+
+    const storedIndex=Math.max(0,Number(localStorage.getItem(SESSION_KEY)||0));
+    const currentIndex=storedIndex%sessions.length;
+    const session=sessions[currentIndex];
+
+    const title=document.querySelector('#view-missao .mission-title h2');
+    const structure=document.querySelector('#view-missao .mission .structure');
+    if(title)title.textContent=session.label;
+    if(structure)structure.textContent=`Sessão ${currentIndex+1}/${sessions.length} · ${session.exercises.length} exercícios · ${session.exercises.reduce((sum,item)=>sum+item.sets,0)} séries diretas`;
 
     ensureCompletionModal();
-    list.innerHTML=`<div class="execution-intro"><span class="screen-label">REGISTRO DA MISSÃO</span><p>Cada série constrói o histórico do Sistema. Registre a resistência usada, repetições realizadas e RIR real.</p></div>${session.exercises.map(renderExerciseCard).join('')}`;
+    list.innerHTML=`<div class="execution-intro"><span class="screen-label">REGISTRO DA MISSÃO · SESSÃO ${currentIndex+1}/${sessions.length}</span><p>Cada série constrói o histórico do Sistema. Registre a resistência usada, repetições realizadas e RIR real.</p></div>${session.exercises.map(renderExerciseCard).join('')}`;
 
     const oldButton=document.getElementById('startBtn');
     if(!oldButton)return;
@@ -254,6 +266,7 @@ document.head.appendChild(executionStyles);
 
         const record={
           id:`workout-${Date.now()}`,
+          sessionIndex:currentIndex,
           sessionLabel:session.label,
           completedAt:new Date().toISOString(),
           exercises
@@ -261,6 +274,7 @@ document.head.appendChild(executionStyles);
         priorHistory.push(record);
         writeJSON(HISTORY_KEY,priorHistory.slice(-100));
         writeJSON(NEXT_KEY,recommendations);
+        localStorage.setItem(SESSION_KEY,String((currentIndex+1)%sessions.length));
 
         button.dataset.state='done';
         button.textContent='MISSÃO CONCLUÍDA';
@@ -268,7 +282,8 @@ document.head.appendChild(executionStyles);
         list.querySelectorAll('input,select,button.set-done').forEach(control=>control.disabled=true);
 
         const progressionCount=Object.values(recommendations).filter(item=>item.state==='PROGRESSÃO DISPONÍVEL').length;
-        document.getElementById('completionSummary').textContent=progressionCount?`${progressionCount} progressão(ões) disponível(is). O restante foi mantido ou adaptado conforme a execução.`:'Dados registrados. A próxima exposição será ajustada a partir desta execução.';
+        const nextSession=sessions[(currentIndex+1)%sessions.length];
+        document.getElementById('completionSummary').textContent=progressionCount?`${progressionCount} progressão(ões) disponível(is). Próxima missão: ${nextSession.label}.`:`Dados registrados. Próxima missão: ${nextSession.label}.`;
         document.getElementById('completionReadings').innerHTML=readings.slice(0,4).map(item=>`<article><span>${item.state}</span><strong>${item.name}</strong><p>${item.text}</p></article>`).join('');
         const modal=document.getElementById('completionModal');
         modal.hidden=false;
@@ -281,5 +296,5 @@ document.head.appendChild(executionStyles);
   }
 
   renderExecution();
-  document.getElementById('profileForm')?.addEventListener('submit',()=>setTimeout(renderExecution,120));
+  document.getElementById('profileForm')?.addEventListener('submit',()=>setTimeout(()=>{localStorage.setItem(SESSION_KEY,'0');renderExecution();},120));
 })();
