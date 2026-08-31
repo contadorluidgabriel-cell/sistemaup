@@ -213,6 +213,11 @@ prescriptionEngineScript.src='prescription-engine.js';
 prescriptionEngineScript.onload=()=>{
   const executionEngineScript=document.createElement('script');
   executionEngineScript.src='execution-engine.js';
+  executionEngineScript.onload=()=>{
+    const exerciseHistoryScript=document.createElement('script');
+    exerciseHistoryScript.src='exercise-history.js';
+    document.body.appendChild(exerciseHistoryScript);
+  };
   document.body.appendChild(executionEngineScript);
 };
 document.body.appendChild(prescriptionEngineScript);
