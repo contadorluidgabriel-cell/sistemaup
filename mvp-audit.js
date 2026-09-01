@@ -90,13 +90,13 @@
     if(!section)return;
     const sessions=plan?.sessions||[];
     const target=5;
-    const progress=Math.min(target,records.length%target||Math.min(records.length,target));
+    const progress=Math.min(target,records.length);
     const headSmall=section.querySelector('.section-head>small');
     const strong=section.querySelector('.card .campaign-top>strong');
     const next=section.querySelector('.next');
     const bar=section.querySelector('.progress>div');
     if(headSmall)headSmall.textContent=`${progress} / ${target}`;
-    if(strong)strong.textContent=progress>=target?'Capítulo concluído. O próximo ciclo começa com os dados acumulados.':`Faltam ${target-progress} missão${target-progress===1?'':'ões'} para concluir este capítulo.`;
+    if(strong)strong.textContent=progress>=target?'Capítulo concluído. Os dados continuam acumulando sem apagar a conquista.':`Faltam ${target-progress} missão${target-progress===1?'':'ões'} para concluir este capítulo.`;
     if(next&&sessions.length){
       const nextSession=sessions[(currentIndex+1)%sessions.length];
       next.innerHTML=`PRÓXIMA MISSÃO:<br>${nextSession?.label||'A definir'}`;
@@ -160,7 +160,7 @@
     if(missionXp)missionXp.textContent='REGISTRO REAL';
     const statusText=document.querySelector('#view-missao .status .xp-text');
     const statusBar=document.querySelector('#view-missao .status .progress>div');
-    const progress=Math.min(5,records.length%5||Math.min(records.length,5));
+    const progress=Math.min(5,records.length);
     if(statusText)statusText.textContent=`JORNADA ${progress} / 5 MISSÕES`;
     if(statusBar)statusBar.style.width=`${Math.min(100,(progress/5)*100)}%`;
   }
@@ -197,6 +197,8 @@
   }
 
   function restoreDraft(){
+    const button=document.getElementById('startBtn');
+    if(button?.dataset.state&&button.dataset.state!=='idle')return;
     const draft=readJSON(DRAFT_KEY,null);
     if(!draft?.exercises?.length)return;
     const age=Date.now()-new Date(draft.savedAt||0).getTime();
@@ -235,7 +237,6 @@
     if(restored){
       const intro=document.querySelector('#exerciseList .execution-intro');
       if(intro)intro.innerHTML='<span class="screen-label">TREINO INTERROMPIDO DETECTADO</span><p>Seu registro parcial foi restaurado. Toque em RETOMAR MISSÃO, confirme como você está agora e continue de onde parou.</p>';
-      const button=document.getElementById('startBtn');
       if(button?.dataset.state==='idle')button.textContent='RETOMAR MISSÃO';
     }
   }
