@@ -18,7 +18,9 @@ jobs:
           node --check app.js
           node --check volume-engine.js
           node --check prescription-engine.js
+          node --check plan-v3.js
           node --check execution-engine.js
+          node --check mission-adapter-v2.js
           node --check exercise-history.js
           node --check training-experience.js
           node --check mvp-audit.js
@@ -34,6 +36,9 @@ jobs:
           test -f index.html
           test -f styles.css
           test -f screens.css
+          test -f plan-v3.css
+          test -f plan-v3.js
+          test -f mission-adapter-v2.js
           test -f app-experience.css
           test -f app-polish-extra.css
           test -f supabase-config.js
