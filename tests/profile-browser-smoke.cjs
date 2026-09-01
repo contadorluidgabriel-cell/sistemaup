@@ -15,7 +15,23 @@ const assert = require('node:assert/strict');
   if(await onboarding.count()){
     await page.click('#appOnboardingBack');
     await page.waitForSelector('#appOnboarding[hidden]');
+    await page.waitForTimeout(150);
   }
+
+  const navState=await page.evaluate(()=>{
+    const view=document.getElementById('view-perfil');
+    const input=document.getElementById('profileName');
+    const chain=[];
+    let node=input;
+    while(node&&chain.length<8){
+      const style=getComputedStyle(node);
+      chain.push({tag:node.tagName,id:node.id||'',className:typeof node.className==='string'?node.className:'',hidden:node.hidden,display:style.display,visibility:style.visibility});
+      node=node.parentElement;
+    }
+    return {hash:location.hash,hasOpenView:typeof window.openView,viewHidden:view?.hidden,viewClass:view?.className,inputDisplay:getComputedStyle(input).display,inputVisibility:getComputedStyle(input).visibility,chain};
+  });
+  console.log('PROFILE_NAV_STATE '+JSON.stringify(navState));
+  assert.equal(navState.viewHidden,false,'profile view stayed hidden after leaving guided setup');
 
   await page.fill('#profileName','Perfil QA');
   await page.selectOption('#profileGoal',{label:'Hipertrofia'});
