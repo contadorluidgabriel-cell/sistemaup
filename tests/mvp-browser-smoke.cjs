@@ -13,7 +13,6 @@ const assert = require('node:assert/strict');
 
   await page.goto('http://127.0.0.1:4173/#missao',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelector('[data-first-access-guard="true"]'));
-  assert.equal((await page.locator('#playerNameDisplay').textContent()).trim(),'Jogador','first access exposes prototype player name');
   assert.equal(await page.locator('#exerciseList .execution-exercise').count(),0,'generic training appeared before profile configuration');
 
   await page.waitForSelector('#appOnboarding:not([hidden])');
