@@ -111,7 +111,7 @@ const assert = require('node:assert/strict');
       await page.waitForTimeout(80);
       continue;
     }
-    const remaining=await page.locator('.set-log-row:not(.completed').count();
+    const remaining=await page.locator('.set-log-row:not(.completed)').count();
     if(remaining===0)break;
     await page.waitForTimeout(100);
   }
