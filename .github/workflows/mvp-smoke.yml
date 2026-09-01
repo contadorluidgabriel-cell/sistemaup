@@ -23,10 +23,19 @@ jobs:
           node --check training-experience.js
           node --check mvp-audit.js
           node --check mvp-ux-guard.js
+          node --check app-experience.js
+          node --check sw.js
 
       - name: Validate required static files
         run: |
           test -f index.html
           test -f styles.css
           test -f screens.css
+          test -f app-experience.css
+          test -f manifest.webmanifest
+          test -f app-icon.svg
+          test -f sw.js
           test -f netlify.toml
+
+      - name: Validate manifest JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8'))"
