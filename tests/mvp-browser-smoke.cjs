@@ -120,9 +120,12 @@ const assert = require('node:assert/strict');
 
   const swReady=await page.evaluate(async()=>{
     if(!('serviceWorker' in navigator))return true;
-    try{await navigator.serviceWorker.ready;return true;}catch{return false;}
+    return Promise.race([
+      navigator.serviceWorker.ready.then(()=>true).catch(()=>false),
+      new Promise(resolve=>setTimeout(()=>resolve(false),5000))
+    ]);
   });
-  assert.equal(swReady,true,'PWA service worker did not become ready');
+  assert.equal(swReady,true,'PWA service worker did not become ready within 5 seconds');
 
   if(pageErrors.length)throw new Error(`Page errors: ${pageErrors.join(' | ')}`);
   if(consoleErrors.length)throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);
