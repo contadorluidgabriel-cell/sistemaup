@@ -1,0 +1,31 @@
+name: MVP Smoke Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate JavaScript syntax
+        run: |
+          node --check app.js
+          node --check volume-engine.js
+          node --check prescription-engine.js
+          node --check execution-engine.js
+          node --check exercise-history.js
+          node --check training-experience.js
+          node --check mvp-audit.js
+
+      - name: Validate required static files
+        run: |
+          test -f index.html
+          test -f styles.css
+          test -f screens.css
+          test -f netlify.toml
