@@ -167,3 +167,44 @@
   document.getElementById('profileForm')?.addEventListener('submit',()=>setTimeout(apply,500));
   apply();
 })();
+
+(()=>{
+  if(!document.querySelector('link[rel="manifest"]')){
+    const manifest=document.createElement('link');
+    manifest.rel='manifest';
+    manifest.href='manifest.webmanifest';
+    document.head.appendChild(manifest);
+  }
+  if(!document.querySelector('link[rel="icon"][href="app-icon.svg"]')){
+    const icon=document.createElement('link');
+    icon.rel='icon';
+    icon.href='app-icon.svg';
+    icon.type='image/svg+xml';
+    document.head.appendChild(icon);
+  }
+  const metas=[
+    ['mobile-web-app-capable','yes'],
+    ['apple-mobile-web-app-capable','yes'],
+    ['apple-mobile-web-app-status-bar-style','black-translucent'],
+    ['description','Sistema de musculação focado em prescrição, execução, registro e evolução individual.']
+  ];
+  metas.forEach(([name,content])=>{
+    if(document.querySelector(`meta[name="${name}"]`))return;
+    const meta=document.createElement('meta');
+    meta.name=name;
+    meta.content=content;
+    document.head.appendChild(meta);
+  });
+  if(!document.querySelector('link[href="app-experience.css"]')){
+    const styles=document.createElement('link');
+    styles.rel='stylesheet';
+    styles.href='app-experience.css';
+    document.head.appendChild(styles);
+  }
+  if(!document.querySelector('script[src="app-experience.js"]')){
+    const script=document.createElement('script');
+    script.src='app-experience.js';
+    script.defer=true;
+    document.body.appendChild(script);
+  }
+})();
