@@ -50,6 +50,10 @@ jobs:
 
       - name: Validate isolated cloud mode
         run: |
-          grep -q "enabled:false" supabase-config.js
+          grep -q "enabled:true" supabase-config.js
+          grep -q "witwoqilxjnviqcxjlwl.supabase.co" supabase-config.js
           grep -q "enable row level security" supabase/schema.sql
+          grep -q "muscle_profiles" supabase/schema.sql
           grep -q "muscle_state" supabase/schema.sql
+          grep -q "muscle_workout_records" supabase/schema.sql
+          grep -q "muscle_workout_records" cloud-sync.js
