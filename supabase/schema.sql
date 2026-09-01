@@ -7,6 +7,12 @@ create table if not exists public.muscle_profiles (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.muscle_state (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  state jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.workout_records (
   user_id uuid not null references auth.users(id) on delete cascade,
   workout_id text not null,
@@ -21,6 +27,7 @@ create index if not exists workout_records_user_completed_idx
   on public.workout_records (user_id, completed_at desc);
 
 alter table public.muscle_profiles enable row level security;
+alter table public.muscle_state enable row level security;
 alter table public.workout_records enable row level security;
 
 drop policy if exists "muscle_profiles_select_own" on public.muscle_profiles;
@@ -42,6 +49,27 @@ create policy "muscle_profiles_update_own"
 drop policy if exists "muscle_profiles_delete_own" on public.muscle_profiles;
 create policy "muscle_profiles_delete_own"
   on public.muscle_profiles for delete
+  using (auth.uid() = user_id);
+
+drop policy if exists "muscle_state_select_own" on public.muscle_state;
+create policy "muscle_state_select_own"
+  on public.muscle_state for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "muscle_state_insert_own" on public.muscle_state;
+create policy "muscle_state_insert_own"
+  on public.muscle_state for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "muscle_state_update_own" on public.muscle_state;
+create policy "muscle_state_update_own"
+  on public.muscle_state for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "muscle_state_delete_own" on public.muscle_state;
+create policy "muscle_state_delete_own"
+  on public.muscle_state for delete
   using (auth.uid() = user_id);
 
 drop policy if exists "workout_records_select_own" on public.workout_records;
