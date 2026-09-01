@@ -16,30 +16,38 @@
   function neutralizeFirstAccess(){
     const savedProfile=readJSON(PROFILE_KEY,null);
     const plan=realPlan();
+    const adapt=document.getElementById('adaptBtn');
 
     if(!savedProfile){
       const player=document.getElementById('playerNameDisplay');
       const profileName=document.getElementById('profileNameDisplay');
       const input=document.getElementById('profileName');
-      if(player)player.textContent='Jogador';
-      if(profileName)profileName.textContent='Jogador';
+      if(player&&player.textContent!=='Jogador')player.textContent='Jogador';
+      if(profileName&&profileName.textContent!=='Jogador')profileName.textContent='Jogador';
       if(input&&input.value==='Luid')input.value='';
     }
 
-    if(plan)return;
+    if(plan){
+      if(adapt)adapt.disabled=false;
+      return;
+    }
 
     const list=document.getElementById('exerciseList');
     const title=document.querySelector('#view-missao .mission-title h2');
     const structure=document.querySelector('#view-missao .mission .structure');
     const start=document.getElementById('startBtn');
-    const adapt=document.getElementById('adaptBtn');
     const missionXp=document.querySelector('#view-missao .mission-title .xp');
+    const empty='<div class="week-empty" data-first-access-guard="true">Configure objetivo, rotina, dias disponíveis, experiência e equipamentos no Perfil. Nenhum treino genérico será mostrado antes disso.</div>';
 
-    if(title)title.textContent='Primeira missão bloqueada';
-    if(structure)structure.textContent='O Sistema precisa conhecer seu contexto antes de prescrever musculação.';
-    if(missionXp)missionXp.textContent='AGUARDA PERFIL';
-    if(list)list.innerHTML='<div class="week-empty">Configure objetivo, rotina, dias disponíveis, experiência e equipamentos no Perfil. Nenhum treino genérico será mostrado antes disso.</div>';
-    if(start){start.disabled=true;start.textContent='CONFIGURE O PERFIL';start.dataset.state='blocked';}
+    if(title&&title.textContent!=='Primeira missão bloqueada')title.textContent='Primeira missão bloqueada';
+    if(structure&&structure.textContent!=='O Sistema precisa conhecer seu contexto antes de prescrever musculação.')structure.textContent='O Sistema precisa conhecer seu contexto antes de prescrever musculação.';
+    if(missionXp&&missionXp.textContent!=='AGUARDA PERFIL')missionXp.textContent='AGUARDA PERFIL';
+    if(list&&!list.querySelector('[data-first-access-guard="true"]'))list.innerHTML=empty;
+    if(start){
+      start.disabled=true;
+      if(start.textContent!=='CONFIGURE O PERFIL')start.textContent='CONFIGURE O PERFIL';
+      start.dataset.state='blocked';
+    }
     if(adapt)adapt.disabled=true;
   }
 
@@ -78,7 +86,7 @@
     const button=document.createElement('button');
     button.type='button';
     button.id='pauseTraining';
-    button.className='training-pause';
+    button.className='training-minimize training-pause';
     button.textContent='PAUSAR E SAIR';
     if(minimize)hud.insertBefore(button,minimize);
     else hud.appendChild(button);
