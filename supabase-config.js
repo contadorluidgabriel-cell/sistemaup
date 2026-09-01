@@ -1,5 +1,5 @@
 window.SISTEMA_SUPABASE={
-  url:'',
-  publishableKey:'',
-  enabled:false
+  url:'https://witwoqilxjnviqcxjlwl.supabase.co',
+  publishableKey:'sb_publishable_Ht7BPNKlWhgSAYjd2LKUEQ_zMYqNXVu',
+  enabled:true
 };
