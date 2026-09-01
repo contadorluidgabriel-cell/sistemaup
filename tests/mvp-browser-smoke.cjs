@@ -9,7 +9,13 @@ const assert = require('node:assert/strict');
   page.on('pageerror',error=>pageErrors.push(error.message));
   page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});
 
-  await page.goto('http://127.0.0.1:4173/#perfil',{waitUntil:'networkidle'});
+  await page.goto('http://127.0.0.1:4173/#missao',{waitUntil:'networkidle'});
+  await page.waitForFunction(()=>document.querySelector('[data-first-access-guard="true"]'));
+  assert.equal((await page.locator('#playerNameDisplay').textContent()).trim(),'Jogador','first access exposes prototype player name');
+  assert.equal((await page.locator('#startBtn').textContent()).trim(),'CONFIGURAR PERFIL','first access does not guide user to profile');
+  assert.equal(await page.locator('#exerciseList .execution-exercise').count(),0,'generic training appeared before profile configuration');
+  await page.click('#startBtn');
+  await page.waitForFunction(()=>location.hash==='#perfil');
   await page.waitForSelector('#profileForm');
 
   await page.fill('#profileName','Teste MVP');
@@ -55,10 +61,15 @@ const assert = require('node:assert/strict');
   const draft=await page.evaluate(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.activeWorkoutDraft.v1')||'null'));
   assert.ok(draft?.exercises?.length,'active workout draft was not persisted');
 
-  await page.reload({waitUntil:'networkidle'});
+  await page.click('#pauseTraining');
+  await page.waitForFunction(()=>document.getElementById('pauseTraining')?.textContent==='CONFIRMAR PAUSA');
+  await Promise.all([
+    page.waitForLoadState('networkidle'),
+    page.click('#pauseTraining')
+  ]);
   await page.waitForSelector('#exerciseList .execution-exercise');
   await page.waitForFunction(()=>document.getElementById('startBtn')?.textContent.includes('RETOMAR'));
-  assert.equal(await page.locator('.set-log-row').first().evaluate(el=>el.classList.contains('completed')),true,'completed set was not restored after reload');
+  assert.equal(await page.locator('.set-log-row').first().evaluate(el=>el.classList.contains('completed')),true,'completed set was not restored after pause');
 
   await page.click('#startBtn');
   await page.waitForSelector('#preMissionModal:not([hidden])');
@@ -90,7 +101,7 @@ const assert = require('node:assert/strict');
   if(pageErrors.length)throw new Error(`Page errors: ${pageErrors.join(' | ')}`);
   if(consoleErrors.length)throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);
 
-  console.log(`MVP browser smoke passed: ${exerciseCount} exercises, ${rowCount} sets, ${plan.unmetTargets.length} unmet targets.`);
+  console.log(`MVP browser smoke passed: first access blocked, pause restored, ${exerciseCount} exercises, ${rowCount} sets, ${plan.unmetTargets.length} unmet targets.`);
   await browser.close();
 })().catch(error=>{
   console.error(error);
