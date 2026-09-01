@@ -4,6 +4,8 @@ const assert = require('node:assert/strict');
 (async()=>{
   const browser = await chromium.launch({headless:true});
   const page = await browser.newPage({viewport:{width:390,height:844}});
+  page.setDefaultTimeout(10000);
+  page.setDefaultNavigationTimeout(15000);
   const pageErrors=[];
   const consoleErrors=[];
   page.on('pageerror',error=>pageErrors.push(error.message));
