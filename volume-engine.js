@@ -205,9 +205,18 @@ document.head.appendChild(volumeStyles);
   document.getElementById('profileForm')?.addEventListener('submit',()=>setTimeout(render,0));
 })();
 
+let preservedV3Plan=null;
+try{
+  const existing=JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null');
+  const profile=JSON.parse(localStorage.getItem('sistemaEvolucao.playerProfile.v1')||'null');
+  const volume=JSON.parse(localStorage.getItem('sistemaEvolucao.volumeTargets.v1')||'null');
+  if(existing?.version===3&&profile?.goal&&profile?.frequency&&volume?.targets?.length)preservedV3Plan=existing;
+}catch{}
+
 const prescriptionEngineScript=document.createElement('script');
 prescriptionEngineScript.src='prescription-engine.js';
 prescriptionEngineScript.onload=()=>{
+  if(preservedV3Plan)localStorage.setItem('sistemaEvolucao.trainingPlan.v1',JSON.stringify(preservedV3Plan));
   const planV3Script=document.createElement('script');
   planV3Script.src='plan-v3.js';
   planV3Script.onload=()=>{
