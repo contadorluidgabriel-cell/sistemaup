@@ -219,6 +219,11 @@ prescriptionEngineScript.onload=()=>{
     exerciseHistoryScript.onload=()=>{
       const trainingExperienceScript=document.createElement('script');
       trainingExperienceScript.src='training-experience.js';
+      trainingExperienceScript.onload=()=>{
+        const mvpAuditScript=document.createElement('script');
+        mvpAuditScript.src='mvp-audit.js';
+        document.body.appendChild(mvpAuditScript);
+      };
       document.body.appendChild(trainingExperienceScript);
     };
     document.body.appendChild(exerciseHistoryScript);
