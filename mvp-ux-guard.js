@@ -201,10 +201,28 @@
     styles.href='app-experience.css';
     document.head.appendChild(styles);
   }
+  if(!document.querySelector('link[href="app-polish-extra.css"]')){
+    const styles=document.createElement('link');
+    styles.rel='stylesheet';
+    styles.href='app-polish-extra.css';
+    document.head.appendChild(styles);
+  }
   if(!document.querySelector('script[src="app-experience.js"]')){
     const script=document.createElement('script');
     script.src='app-experience.js';
     script.defer=true;
+    script.onload=()=>{
+      if(document.querySelector('script[src="app-polish-extra.js"]'))return;
+      const extra=document.createElement('script');
+      extra.src='app-polish-extra.js';
+      extra.defer=true;
+      document.body.appendChild(extra);
+    };
     document.body.appendChild(script);
+  }else if(!document.querySelector('script[src="app-polish-extra.js"]')){
+    const extra=document.createElement('script');
+    extra.src='app-polish-extra.js';
+    extra.defer=true;
+    document.body.appendChild(extra);
   }
 })();
