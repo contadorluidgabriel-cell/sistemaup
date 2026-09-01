@@ -24,6 +24,7 @@ jobs:
           node --check mvp-audit.js
           node --check mvp-ux-guard.js
           node --check app-experience.js
+          node --check app-polish-extra.js
           node --check sw.js
 
       - name: Validate required static files
@@ -32,6 +33,7 @@ jobs:
           test -f styles.css
           test -f screens.css
           test -f app-experience.css
+          test -f app-polish-extra.css
           test -f manifest.webmanifest
           test -f app-icon.svg
           test -f sw.js
