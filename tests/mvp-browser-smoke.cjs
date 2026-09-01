@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
   page.on('pageerror',error=>pageErrors.push(error.message));
   page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});
 
-  await page.goto('http://127.0.0.1:4173/#missao',{waitUntil:'networkidle'});
+  await page.goto('http://127.0.0.1:4173/#missao',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelector('[data-first-access-guard="true"]'));
   assert.equal((await page.locator('#playerNameDisplay').textContent()).trim(),'Jogador','first access exposes prototype player name');
   assert.equal(await page.locator('#exerciseList .execution-exercise').count(),0,'generic training appeared before profile configuration');
@@ -41,9 +41,7 @@ const assert = require('node:assert/strict');
   await page.click('#appOnboardingNext');
 
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.playerProfile.v1')||'null')?.name==='Teste MVP');
-  await page.waitForTimeout(1200);
-  await page.waitForLoadState('networkidle');
-  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null')?.version===3);
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null')?.version===3,{timeout:10000});
   await page.waitForFunction(()=>['MOTOR V3','PLANO PERSONALIZADO'].includes(document.getElementById('prescriptionState')?.textContent||''));
   await page.waitForSelector('#appHomeShell');
 
@@ -54,6 +52,23 @@ const assert = require('node:assert/strict');
   assert.ok(Array.isArray(plan.unmetTargets),'plan does not expose unmet targets');
   assert.ok(plan.architecture?.reason,'v3 plan does not explain its weekly architecture');
   assert.equal((await page.locator('.app-brand-copy strong').textContent()).includes('Teste'),true,'app home did not use player identity');
+
+  await page.evaluate(()=>location.hash='#perfil');
+  await page.waitForSelector('#profileForm');
+  await page.fill('#profileName','Teste Editado');
+  await page.selectOption('#profileGoal',{label:'Força'});
+  await page.locator('input[name="equipment"][value="Halteres"]').check();
+  await page.locator('input[name="availableDay"][value="seg"]').check();
+  await page.click('#profileForm button[type="submit"]');
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.playerProfile.v1')||'null')?.name==='Teste Editado');
+  const editedProfile=await page.evaluate(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.playerProfile.v1')||'null'));
+  assert.equal(editedProfile.goal,'Força','manual profile form did not persist goal');
+  assert.ok(editedProfile.equipment.includes('Halteres'),'manual profile form did not persist equipment');
+  assert.equal((await page.locator('#profileNameDisplay').textContent()).trim(),'Teste Editado','profile UI did not reflect manual save');
+
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.playerProfile.v1')||'null')?.name==='Teste Editado');
+  assert.equal((await page.locator('#profileNameDisplay').textContent()).trim(),'Teste Editado','profile did not survive reload');
 
   await page.evaluate(()=>location.hash='#plano');
   await page.waitForSelector('#openPlanEditor');
@@ -89,9 +104,6 @@ const assert = require('node:assert/strict');
   await page.click('#pauseTraining');
   await page.waitForFunction(()=>document.getElementById('pauseTraining')?.textContent==='CONFIRMAR PAUSA');
   await page.click('#pauseTraining');
-  await page.waitForTimeout(450);
-  await page.waitForLoadState('networkidle');
-  await page.waitForSelector('#exerciseList .execution-exercise');
   await page.waitForFunction(()=>document.getElementById('startBtn')?.textContent.includes('RETOMAR'));
   assert.equal(await page.locator('.set-log-row').first().evaluate(el=>el.classList.contains('completed')),true,'completed set was not restored after pause');
 
@@ -143,7 +155,7 @@ const assert = require('node:assert/strict');
   if(pageErrors.length)throw new Error(`Page errors: ${pageErrors.join(' | ')}`);
   if(consoleErrors.length)throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);
 
-  console.log(`MVP app smoke passed: prescription v3, editor, focused workout, pause/resume, progress and PWA shell. ${exerciseCount} exercises, ${totalRows} sets.`);
+  console.log(`MVP app smoke passed: profile persisted, prescription v3, editor, focused workout, pause/resume, progress and PWA shell. ${exerciseCount} exercises, ${totalRows} sets.`);
   await browser.close();
 })().catch(error=>{
   console.error(error);
