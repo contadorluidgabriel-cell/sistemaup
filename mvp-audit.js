@@ -3,8 +3,21 @@
   const VOLUME_KEY='sistemaEvolucao.volumeTargets.v1';
   const HISTORY_KEY='sistemaEvolucao.workoutHistory.v1';
   const SESSION_KEY='sistemaEvolucao.currentSessionIndex.v1';
+  const CHECKIN_KEY='sistemaEvolucao.pendingCheckIn.v1';
+  const DRAFT_KEY='sistemaEvolucao.activeWorkoutDraft.v1';
+  const MANUAL_ADAPT_KEY='sistemaEvolucao.manualMissionAdaptation.v1';
 
   const readJSON=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}};
+  const writeJSON=(key,value)=>localStorage.setItem(key,JSON.stringify(value));
+
+  function toast(message){
+    const el=document.getElementById('toast');
+    if(!el)return;
+    el.textContent=message;
+    el.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer=setTimeout(()=>el.classList.remove('show'),2400);
+  }
 
   function addSingleDayOption(){
     const select=document.getElementById('profileFrequency');
@@ -144,12 +157,171 @@
 
   function neutralizePlaceholderXp(records){
     const missionXp=document.querySelector('#view-missao .mission-title .xp');
-    if(missionXp){missionXp.textContent='REGISTRO REAL';}
+    if(missionXp)missionXp.textContent='REGISTRO REAL';
     const statusText=document.querySelector('#view-missao .status .xp-text');
     const statusBar=document.querySelector('#view-missao .status .progress>div');
     const progress=Math.min(5,records.length%5||Math.min(records.length,5));
     if(statusText)statusText.textContent=`JORNADA ${progress} / 5 MISSÕES`;
     if(statusBar)statusBar.style.width=`${Math.min(100,(progress/5)*100)}%`;
+  }
+
+  function currentSessionIndex(){
+    const plan=readJSON(PLAN_KEY,null);
+    const sessions=plan?.sessions||[];
+    return sessions.length?Math.max(0,Number(localStorage.getItem(SESSION_KEY)||0))%sessions.length:0;
+  }
+
+  function captureDraft(){
+    const button=document.getElementById('startBtn');
+    if(!button||button.dataset.state!=='active')return;
+    const cards=[...document.querySelectorAll('#exerciseList .execution-exercise')];
+    if(!cards.length)return;
+    const draft={
+      version:1,
+      sessionIndex:currentSessionIndex(),
+      savedAt:new Date().toISOString(),
+      checkIn:readJSON(CHECKIN_KEY,null),
+      exercises:cards.map(card=>({
+        id:card.dataset.exerciseId,
+        discomfort:card.querySelector('.exercise-discomfort')?.value||'none',
+        note:card.querySelector('.exercise-note-input')?.value||'',
+        sets:[...card.querySelectorAll('.set-log-row')].map(row=>({
+          load:row.querySelector('.set-load')?.value||'',
+          reps:row.querySelector('.set-reps')?.value||'',
+          rir:row.querySelector('.set-rir')?.value||'',
+          completed:row.classList.contains('completed')
+        }))
+      }))
+    };
+    writeJSON(DRAFT_KEY,draft);
+  }
+
+  function restoreDraft(){
+    const draft=readJSON(DRAFT_KEY,null);
+    if(!draft?.exercises?.length)return;
+    const age=Date.now()-new Date(draft.savedAt||0).getTime();
+    if(!Number.isFinite(age)||age>12*60*60*1000||draft.sessionIndex!==currentSessionIndex()){
+      localStorage.removeItem(DRAFT_KEY);
+      return;
+    }
+    const cards=[...document.querySelectorAll('#exerciseList .execution-exercise')];
+    if(!cards.length)return;
+
+    let restored=0;
+    cards.forEach(card=>{
+      const saved=draft.exercises.find(item=>item.id===card.dataset.exerciseId);
+      if(!saved)return;
+      restored+=1;
+      const rows=[...card.querySelectorAll('.set-log-row')];
+      rows.forEach((row,index)=>{
+        const set=saved.sets?.[index];
+        if(!set)return;
+        const load=row.querySelector('.set-load');
+        const reps=row.querySelector('.set-reps');
+        const rir=row.querySelector('.set-rir');
+        const done=row.querySelector('.set-done');
+        if(load)load.value=set.load||'';
+        if(reps)reps.value=set.reps??'';
+        if(rir)rir.value=set.rir??'';
+        row.classList.toggle('completed',Boolean(set.completed));
+        if(done)done.textContent=set.completed?'✓':'○';
+      });
+      const discomfort=card.querySelector('.exercise-discomfort');
+      if(discomfort)discomfort.value=saved.discomfort||'none';
+      const note=card.querySelector('.exercise-note-input');
+      if(note)note.value=saved.note||'';
+    });
+
+    if(restored){
+      const intro=document.querySelector('#exerciseList .execution-intro');
+      if(intro)intro.innerHTML='<span class="screen-label">TREINO INTERROMPIDO DETECTADO</span><p>Seu registro parcial foi restaurado. Toque em RETOMAR MISSÃO, confirme como você está agora e continue de onde parou.</p>';
+      const button=document.getElementById('startBtn');
+      if(button?.dataset.state==='idle')button.textContent='RETOMAR MISSÃO';
+    }
+  }
+
+  function updateStructureAfterOmission(){
+    const cards=[...document.querySelectorAll('#exerciseList .execution-exercise')];
+    const sets=cards.reduce((sum,card)=>sum+card.querySelectorAll('.set-log-row').length,0);
+    const structure=document.querySelector('#view-missao .mission .structure');
+    if(structure)structure.textContent=`MISSÃO ADAPTADA · ${cards.length} exercícios · ${sets} séries diretas`;
+  }
+
+  function ensureTemporaryAdaptModal(){
+    if(document.getElementById('temporaryAdaptModal'))return;
+    document.body.insertAdjacentHTML('beforeend',`
+      <div class="modal-backdrop" id="temporaryAdaptModal" hidden>
+        <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="temporaryAdaptTitle">
+          <div class="kicker">◆ ADAPTAÇÃO TEMPORÁRIA</div>
+          <h2 id="temporaryAdaptTitle">Qual exercício ficou inviável?</h2>
+          <p class="muted">A alteração vale apenas para a missão atual. O Sistema não inventa uma substituição incompatível sem saber qual equipamento ou movimento realmente está disponível.</p>
+          <div class="reason-grid" id="temporaryAdaptChoices"></div>
+          <button class="modal-close" id="closeTemporaryAdapt">CANCELAR</button>
+        </div>
+      </div>`);
+    const modal=document.getElementById('temporaryAdaptModal');
+    const close=()=>{modal.hidden=true;document.body.classList.remove('modal-open');};
+    document.getElementById('closeTemporaryAdapt')?.addEventListener('click',close);
+    modal?.addEventListener('click',event=>{if(event.target===modal)close();});
+    document.getElementById('temporaryAdaptChoices')?.addEventListener('click',event=>{
+      const option=event.target.closest('[data-omit-exercise]');
+      if(!option)return;
+      const cards=[...document.querySelectorAll('#exerciseList .execution-exercise')];
+      if(cards.length<=1){toast('A missão precisa manter ao menos um exercício.');return;}
+      const id=option.dataset.omitExercise;
+      const card=cards.find(item=>item.dataset.exerciseId===id);
+      if(!card)return;
+      const name=card.dataset.name||card.querySelector('.execution-exercise-head strong')?.textContent||'Exercício';
+      const reason=modal.dataset.reason||'Exercício inviável hoje';
+      const adaptation=readJSON(MANUAL_ADAPT_KEY,{version:1,items:[]});
+      adaptation.items=Array.isArray(adaptation.items)?adaptation.items:[];
+      adaptation.items.push({id,name,reason,recordedAt:new Date().toISOString()});
+      adaptation.updatedAt=new Date().toISOString();
+      writeJSON(MANUAL_ADAPT_KEY,adaptation);
+      card.remove();
+      updateStructureAfterOmission();
+      close();
+      toast(`${name} removido somente desta missão.`);
+      captureDraft();
+    });
+  }
+
+  function openTemporaryAdapt(reason){
+    ensureTemporaryAdaptModal();
+    const modal=document.getElementById('temporaryAdaptModal');
+    const choices=document.getElementById('temporaryAdaptChoices');
+    const cards=[...document.querySelectorAll('#exerciseList .execution-exercise')];
+    if(!modal||!choices)return;
+    if(!cards.length){toast('Gere uma missão antes de adaptar exercícios.');return;}
+    modal.dataset.reason=reason;
+    choices.innerHTML=cards.map((card,index)=>`<button type="button" data-omit-exercise="${card.dataset.exerciseId}"><strong>${card.dataset.name||'Exercício'}</strong><br><small>${index===0?'PRIMEIRO NA PRESCRIÇÃO · confirme antes de remover':'Remover somente da missão atual'}</small></button>`).join('');
+    modal.hidden=false;
+    document.body.classList.add('modal-open');
+  }
+
+  function prefillCheckin(field,value){
+    const start=document.getElementById('startBtn');
+    if(!start)return;
+    start.click();
+    setTimeout(()=>{
+      const input=document.getElementById(field);
+      if(!input)return;
+      input.value=value;
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+    },40);
+  }
+
+  function attachManualAdaptation(){
+    const adaptation=readJSON(MANUAL_ADAPT_KEY,null);
+    if(!adaptation?.items?.length)return;
+    const records=readJSON(HISTORY_KEY,[]);
+    if(!Array.isArray(records)||!records.length)return;
+    const last=records[records.length-1];
+    const completedAt=new Date(last.completedAt||0).getTime();
+    if(!completedAt||Date.now()-completedAt>10000)return;
+    last.manualAdaptation=adaptation;
+    writeJSON(HISTORY_KEY,records);
+    localStorage.removeItem(MANUAL_ADAPT_KEY);
   }
 
   function syncAll(){
@@ -164,20 +336,64 @@
     syncPlanCycle(plan,currentIndex);
     syncProgressReality(records);
     neutralizePlaceholderXp(records);
+    restoreDraft();
   }
 
-  document.addEventListener('click',event=>{
-    if(event.target.closest('#startBtn')||event.target.closest('#closeCompletion'))setTimeout(syncAll,180);
+  let draftTimer=null;
+  const scheduleDraft=()=>{
+    clearTimeout(draftTimer);
+    draftTimer=setTimeout(captureDraft,180);
+  };
+
+  document.addEventListener('input',event=>{
+    if(event.target.closest('#exerciseList'))scheduleDraft();
   });
-  document.getElementById('profileForm')?.addEventListener('submit',()=>setTimeout(syncAll,240));
+  document.addEventListener('change',event=>{
+    if(event.target.closest('#exerciseList'))scheduleDraft();
+  });
+
+  document.addEventListener('click',event=>{
+    const reasonButton=event.target.closest('[data-reason]');
+    if(reasonButton){
+      const reason=reasonButton.dataset.reason||'';
+      if(reason==='Menos tempo disponível')setTimeout(()=>prefillCheckin('checkinTime','30'),0);
+      else if(reason==='Energia abaixo do normal')setTimeout(()=>prefillCheckin('checkinEnergy','low'),0);
+      else if(reason==='Desconforto ou limitação')setTimeout(()=>prefillCheckin('checkinCondition','mild'),0);
+      else if(reason==='Equipamento indisponível'||reason==='Exercício inviável hoje')setTimeout(()=>openTemporaryAdapt(reason),0);
+      else if(reason==='Outro contexto')setTimeout(()=>prefillCheckin('checkinEnergy','normal'),0);
+    }
+
+    if(event.target.closest('.set-done'))setTimeout(scheduleDraft,20);
+
+    const start=event.target.closest('#startBtn');
+    if(start){
+      setTimeout(()=>{
+        if(start.dataset.state==='active')captureDraft();
+        if(start.dataset.state==='done'){
+          attachManualAdaptation();
+          localStorage.removeItem(DRAFT_KEY);
+          setTimeout(syncAll,120);
+        }
+      },120);
+    }
+    if(event.target.closest('#closeCompletion'))setTimeout(syncAll,180);
+  });
+
+  document.getElementById('profileForm')?.addEventListener('submit',()=>{
+    localStorage.removeItem(DRAFT_KEY);
+    localStorage.removeItem(MANUAL_ADAPT_KEY);
+    setTimeout(syncAll,240);
+  });
   window.addEventListener('storage',syncAll);
 
   const observer=new MutationObserver(()=>{
     fixRestTargets();
     renderPrescriptionCoverage();
+    restoreDraft();
   });
   const exerciseList=document.getElementById('exerciseList');
   if(exerciseList)observer.observe(exerciseList,{childList:true,subtree:true});
 
+  ensureTemporaryAdaptModal();
   syncAll();
 })();
