@@ -54,11 +54,8 @@ document.head.appendChild(volumeStyles);
   function sessionCount(profile){
     const requested=Number(profile.frequency)||0;
     if(!requested)return 0;
-    let cap=requested;
-    if(profile.experience==='Iniciante'||!profile.experience)cap=Math.min(cap,3);
-    else if(profile.experience==='Intermediário')cap=Math.min(cap,4);
-    if(profile.availableDays.length)cap=Math.min(cap,profile.availableDays.length);
-    return cap;
+    if(profile.availableDays.length)return Math.min(requested,profile.availableDays.length);
+    return requested;
   }
 
   function baseBand(profile){
@@ -70,7 +67,7 @@ document.head.appendChild(volumeStyles);
   function exposureTarget(profile,role){
     const sessions=sessionCount(profile);
     if(sessions<=1)return '1 exposição';
-    if(role==='primary'&&sessions===5)return '2–3 exposições';
+    if(role==='primary'&&sessions>=5)return '2–3 exposições';
     return '2 exposições';
   }
 
@@ -211,28 +208,38 @@ document.head.appendChild(volumeStyles);
 const prescriptionEngineScript=document.createElement('script');
 prescriptionEngineScript.src='prescription-engine.js';
 prescriptionEngineScript.onload=()=>{
-  const executionEngineScript=document.createElement('script');
-  executionEngineScript.src='execution-engine.js';
-  executionEngineScript.onload=()=>{
-    const exerciseHistoryScript=document.createElement('script');
-    exerciseHistoryScript.src='exercise-history.js';
-    exerciseHistoryScript.onload=()=>{
-      const trainingExperienceScript=document.createElement('script');
-      trainingExperienceScript.src='training-experience.js';
-      trainingExperienceScript.onload=()=>{
-        const mvpAuditScript=document.createElement('script');
-        mvpAuditScript.src='mvp-audit.js';
-        mvpAuditScript.onload=()=>{
-          const mvpUxGuardScript=document.createElement('script');
-          mvpUxGuardScript.src='mvp-ux-guard.js';
-          document.body.appendChild(mvpUxGuardScript);
+  const planV3Script=document.createElement('script');
+  planV3Script.src='plan-v3.js';
+  planV3Script.onload=()=>{
+    const executionEngineScript=document.createElement('script');
+    executionEngineScript.src='execution-engine.js';
+    executionEngineScript.onload=()=>{
+      const missionAdapterScript=document.createElement('script');
+      missionAdapterScript.src='mission-adapter-v2.js';
+      missionAdapterScript.onload=()=>{
+        const exerciseHistoryScript=document.createElement('script');
+        exerciseHistoryScript.src='exercise-history.js';
+        exerciseHistoryScript.onload=()=>{
+          const trainingExperienceScript=document.createElement('script');
+          trainingExperienceScript.src='training-experience.js';
+          trainingExperienceScript.onload=()=>{
+            const mvpAuditScript=document.createElement('script');
+            mvpAuditScript.src='mvp-audit.js';
+            mvpAuditScript.onload=()=>{
+              const mvpUxGuardScript=document.createElement('script');
+              mvpUxGuardScript.src='mvp-ux-guard.js';
+              document.body.appendChild(mvpUxGuardScript);
+            };
+            document.body.appendChild(mvpAuditScript);
+          };
+          document.body.appendChild(trainingExperienceScript);
         };
-        document.body.appendChild(mvpAuditScript);
+        document.body.appendChild(exerciseHistoryScript);
       };
-      document.body.appendChild(trainingExperienceScript);
+      document.body.appendChild(missionAdapterScript);
     };
-    document.body.appendChild(exerciseHistoryScript);
+    document.body.appendChild(executionEngineScript);
   };
-  document.body.appendChild(executionEngineScript);
+  document.body.appendChild(planV3Script);
 };
 document.body.appendChild(prescriptionEngineScript);
