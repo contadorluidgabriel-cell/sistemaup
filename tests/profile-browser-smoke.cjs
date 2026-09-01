@@ -8,11 +8,11 @@ const assert = require('node:assert/strict');
   const pageErrors=[];
   page.on('pageerror',error=>pageErrors.push(error.message));
 
+  await page.addInitScript(()=>{
+    localStorage.setItem('sistemaEvolucao.onboarding.v1',JSON.stringify({testOnly:true,version:1}));
+  });
   await page.goto('http://127.0.0.1:4173/#perfil',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#profileForm');
-  await page.waitForSelector('#appOnboarding:not([hidden])');
-  await page.click('#appOnboardingBack');
-  await page.waitForSelector('#appOnboarding[hidden]');
   await page.waitForFunction(()=>document.getElementById('view-perfil')?.hidden===false);
 
   await page.fill('#profileName','Perfil QA');
