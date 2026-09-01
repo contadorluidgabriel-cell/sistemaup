@@ -18,7 +18,7 @@ const assert = require('node:assert/strict');
     }));
     localStorage.setItem('sistemaEvolucao.onboarding.v1',JSON.stringify({completedAt:new Date().toISOString(),version:1}));
   });
-  await page.reload({waitUntil:'networkidle'});
+  await page.reload({waitUntil:'domcontentloaded'});
 
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null')?.version===3);
   await page.waitForSelector('#openPlanEditor');
@@ -34,7 +34,6 @@ const assert = require('node:assert/strict');
   const plus=page.locator('#planEditorBody .pe-session').first().locator('.pe-exercise').first().locator('[data-act="sets-plus"]');
   await plus.click();
   await page.click('#savePlanEditor');
-  await page.waitForLoadState('domcontentloaded');
   await page.waitForFunction(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null')?.userEdited===true);
   const edited=await page.evaluate(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')));
   assert.equal(edited.sessions[0].exercises[0].sets,Math.min(6,beforeSets+1),'manual set edit was not preserved');
