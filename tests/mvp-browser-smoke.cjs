@@ -18,12 +18,12 @@ const assert = require('node:assert/strict');
   await page.selectOption('#profileDuration','30–45 min');
   await page.selectOption('#profileExperience','Iniciante');
   await page.selectOption('#profilePrimaryFocus','Peito');
-  await page.check('input[name="availableDay"][value="seg"]');
-  await page.check('input[name="availableDay"][value="qua"]');
-  await page.check('input[name="availableDay"][value="sex"]');
-  await page.check('input[name="equipment"][value="Halteres"]');
-  await page.check('input[name="equipment"][value="Elásticos"]');
-  await page.check('input[name="equipment"][value="Banco"]');
+  await page.locator('label.day-chip:has(input[value="seg"])').click();
+  await page.locator('label.day-chip:has(input[value="qua"])').click();
+  await page.locator('label.day-chip:has(input[value="sex"])').click();
+  await page.locator('label.check-chip:has(input[name="equipment"][value="Halteres"])').click();
+  await page.locator('label.check-chip:has(input[name="equipment"][value="Elásticos"])').click();
+  await page.locator('label.check-chip:has(input[name="equipment"][value="Banco"])').click();
   await page.click('#profileForm button[type="submit"]');
 
   await page.waitForFunction(()=>document.getElementById('prescriptionState')?.textContent==='PLANO GERADO');
@@ -91,7 +91,7 @@ const assert = require('node:assert/strict');
 
   console.log(`MVP browser smoke passed: ${exerciseCount} exercises, ${rowCount} sets.`);
   await browser.close();
-})().catch(async error=>{
+})().catch(error=>{
   console.error(error);
   process.exit(1);
 });
