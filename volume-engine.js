@@ -222,6 +222,11 @@ prescriptionEngineScript.onload=()=>{
       trainingExperienceScript.onload=()=>{
         const mvpAuditScript=document.createElement('script');
         mvpAuditScript.src='mvp-audit.js';
+        mvpAuditScript.onload=()=>{
+          const mvpUxGuardScript=document.createElement('script');
+          mvpUxGuardScript.src='mvp-ux-guard.js';
+          document.body.appendChild(mvpUxGuardScript);
+        };
         document.body.appendChild(mvpAuditScript);
       };
       document.body.appendChild(trainingExperienceScript);
