@@ -8,6 +8,25 @@
   const readJSON=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}};
   const writeJSON=(key,value)=>localStorage.setItem(key,JSON.stringify(value));
 
+  function openProfileViewNow(){
+    if(typeof window.openView==='function'){
+      window.openView('perfil',{updateHash:true,scroll:true});
+      return;
+    }
+    document.querySelectorAll('.view[data-view]').forEach(view=>{
+      const active=view.dataset.view==='perfil';
+      view.hidden=!active;
+      view.classList.toggle('active-view',active);
+    });
+    document.querySelectorAll('.nav button[data-target]').forEach(button=>{
+      const active=button.dataset.target==='perfil';
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-current',active?'page':'false');
+    });
+    if(location.hash!=='#perfil')history.pushState({view:'perfil'},'','#perfil');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
   function realPlan(){
     const plan=readJSON(PLAN_KEY,null);
     return plan&&Array.isArray(plan.sessions)&&plan.sessions.length?plan:null;
@@ -152,14 +171,45 @@
     },true);
   }
 
+  function ensureProfileSaveFeedback(){
+    const form=document.getElementById('profileForm');
+    if(!form||form.dataset.profileSaveFeedback==='true')return;
+    form.dataset.profileSaveFeedback='true';
+    form.addEventListener('submit',()=>{
+      const button=form.querySelector('button[type="submit"]');
+      const original=button?.textContent||'SALVAR CONTEXTO DO JOGADOR';
+      setTimeout(()=>{
+        const saved=readJSON(PROFILE_KEY,null);
+        if(!saved)return;
+        if(button){
+          button.textContent='PERFIL SALVO ✓';
+          button.dataset.saved='true';
+          setTimeout(()=>{
+            button.textContent=original;
+            delete button.dataset.saved;
+          },1800);
+        }
+        if(typeof window.dispatchEvent==='function')window.dispatchEvent(new CustomEvent('sistema:profile-saved',{detail:{profile:saved}}));
+      },120);
+    });
+  }
+
   function apply(){
     neutralizeFirstAccess();
     ensurePauseButton();
     protectSessionFromCosmeticProfileEdits();
+    ensureProfileSaveFeedback();
   }
+
+  document.addEventListener('click',event=>{
+    const button=event.target.closest('#appOnboardingBack');
+    if(!button||button.textContent.trim()!=='USAR FORMULÁRIO')return;
+    setTimeout(openProfileViewNow,0);
+  });
 
   const observer=new MutationObserver(()=>{
     ensurePauseButton();
+    ensureProfileSaveFeedback();
     if(!realPlan())neutralizeFirstAccess();
   });
   observer.observe(document.body,{childList:true,subtree:true});
