@@ -10,28 +10,10 @@ const assert = require('node:assert/strict');
 
   await page.goto('http://127.0.0.1:4173/#perfil',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#profileForm');
-
-  const onboarding=page.locator('#appOnboarding:not([hidden])');
-  if(await onboarding.count()){
-    await page.click('#appOnboardingBack');
-    await page.waitForSelector('#appOnboarding[hidden]');
-    await page.waitForTimeout(150);
-  }
-
-  const navState=await page.evaluate(()=>{
-    const view=document.getElementById('view-perfil');
-    const input=document.getElementById('profileName');
-    const chain=[];
-    let node=input;
-    while(node&&chain.length<8){
-      const style=getComputedStyle(node);
-      chain.push({tag:node.tagName,id:node.id||'',className:typeof node.className==='string'?node.className:'',hidden:node.hidden,display:style.display,visibility:style.visibility});
-      node=node.parentElement;
-    }
-    return {hash:location.hash,hasOpenView:typeof window.openView,viewHidden:view?.hidden,viewClass:view?.className,inputDisplay:getComputedStyle(input).display,inputVisibility:getComputedStyle(input).visibility,chain};
-  });
-  console.log('PROFILE_NAV_STATE '+JSON.stringify(navState));
-  assert.equal(navState.viewHidden,false,'profile view stayed hidden after leaving guided setup');
+  await page.waitForSelector('#appOnboarding:not([hidden])');
+  await page.click('#appOnboardingBack');
+  await page.waitForSelector('#appOnboarding[hidden]');
+  await page.waitForFunction(()=>document.getElementById('view-perfil')?.hidden===false);
 
   await page.fill('#profileName','Perfil QA');
   await page.selectOption('#profileGoal',{label:'Hipertrofia'});
@@ -69,6 +51,6 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('input[name="equipment"][value="Halteres"]').isChecked(),true,'equipment did not survive reload');
 
   if(pageErrors.length)throw new Error(`Page errors: ${pageErrors.join(' | ')}`);
-  console.log('Profile smoke passed: form save, Plan V3 generation and reload persistence.');
+  console.log('Profile smoke passed: manual form save, Plan V3 generation and reload persistence.');
   await browser.close();
 })().catch(error=>{console.error(error);process.exit(1);});
