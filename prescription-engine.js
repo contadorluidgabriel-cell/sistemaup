@@ -216,25 +216,25 @@ document.head.appendChild(prescriptionStyles);
     const targets=targetMap(volume);
     const roleOrder={primary:0,secondary:1,base:2};
     const muscles=Object.values(targets).sort((a,b)=>roleOrder[a.role]-roleOrder[b.role]||b.target-a.target);
+    const blockedMuscles=new Set();
 
     for(let pass=0;pass<30;pass++){
       const totals=seriesEquivalent(sessions);
-      const under=muscles.find(item=>(totals[item.muscle]||0)+0.01<item.target);
+      const under=muscles.find(item=>!blockedMuscles.has(item.muscle)&&(totals[item.muscle]||0)+0.01<item.target);
       if(!under)break;
       const session=bestSessionForMuscle(sessions,under.muscle,profile);
-      if(!session)break;
+      if(!session){blockedMuscles.add(under.muscle);continue;}
       const existing=session.exercises.find(item=>item.exercise.primary===under.muscle&&item.sets<4);
       if(existing&&sessionSetCount(session)<sessionCapacity(profile).sets){existing.sets+=1;continue;}
       const deficit=Math.ceil(under.target-(totals[under.muscle]||0));
       const added=addExercise(session,under.muscle,profile,usedIds,Math.min(2,Math.max(1,deficit)),true);
-      if(!added){
-        under.target=totals[under.muscle]||0;
-      }
+      if(!added)blockedMuscles.add(under.muscle);
     }
 
     sessions.forEach(session=>orderExercises(session,profile));
     const totals=seriesEquivalent(sessions);
-    return {sessions,totals,targets};
+    const unmetTargets=muscles.filter(item=>(totals[item.muscle]||0)+0.01<item.target).map(item=>({muscle:item.muscle,target:item.target,actual:totals[item.muscle]||0,role:item.role,reason:blockedMuscles.has(item.muscle)?'capacidade ou equipamento atual':'faixa ainda não preenchida'}));
+    return {sessions,totals,targets,unmetTargets};
   }
 
   function progressionRule(profile){
@@ -305,14 +305,14 @@ document.head.appendChild(prescriptionStyles);
     }
 
     const plan=buildPlan(profile,volume);
-    if(state)state.textContent='PLANO GERADO';
+    if(state)state.textContent=plan.unmetTargets.length?'PLANO PARCIAL':'PLANO GERADO';
     if(title)title.textContent=`${plan.sessions.length} sessões · ${profile.goal}`;
-    if(text)text.textContent='O plano começa pela faixa inferior de volume e usa trabalho direto + indireto para evitar séries redundantes.';
+    if(text)text.textContent=plan.unmetTargets.length?'O Sistema montou o melhor plano possível com a configuração atual e manteve visíveis as faixas que não puderam ser preenchidas sem forçar a prescrição.':'O plano começa pela faixa inferior de volume e usa trabalho direto + indireto para evitar séries redundantes.';
     if(progression)progression.textContent=progressionRule(profile);
     container.innerHTML=plan.sessions.map(renderPlanSession).join('');
     renderHomeMission(plan,profile);
 
-    localStorage.setItem(PLAN_KEY,JSON.stringify({version:1,generatedAt:new Date().toISOString(),goal:profile.goal,experience:profile.experience,sessions:plan.sessions.map(s=>({label:s.label,exercises:s.exercises.map(item=>({id:item.exercise.id,name:item.exercise.name,primary:item.exercise.primary,secondary:item.exercise.secondary,sets:item.sets,reps:item.reps,rir:item.rir,rest:item.rest}))})),equivalentVolume:plan.totals,targets:plan.targets}));
+    localStorage.setItem(PLAN_KEY,JSON.stringify({version:2,generatedAt:new Date().toISOString(),goal:profile.goal,experience:profile.experience,sessions:plan.sessions.map(s=>({label:s.label,exercises:s.exercises.map(item=>({id:item.exercise.id,name:item.exercise.name,primary:item.exercise.primary,secondary:item.exercise.secondary,sets:item.sets,reps:item.reps,rir:item.rir,rest:item.rest}))})),equivalentVolume:plan.totals,targets:plan.targets,unmetTargets:plan.unmetTargets}));
   }
 
   render();
