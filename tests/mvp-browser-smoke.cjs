@@ -12,30 +12,42 @@ const assert = require('node:assert/strict');
   await page.goto('http://127.0.0.1:4173/#missao',{waitUntil:'networkidle'});
   await page.waitForFunction(()=>document.querySelector('[data-first-access-guard="true"]'));
   assert.equal((await page.locator('#playerNameDisplay').textContent()).trim(),'Jogador','first access exposes prototype player name');
-  assert.equal((await page.locator('#startBtn').textContent()).trim(),'CONFIGURAR PERFIL','first access does not guide user to profile');
   assert.equal(await page.locator('#exerciseList .execution-exercise').count(),0,'generic training appeared before profile configuration');
-  await page.click('#startBtn');
-  await page.waitForFunction(()=>location.hash==='#perfil');
-  await page.waitForSelector('#profileForm');
 
-  await page.fill('#profileName','Teste MVP');
-  await page.selectOption('#profileGoal','Hipertrofia');
-  await page.selectOption('#profileFrequency','3');
-  await page.selectOption('#profileDuration','30–45 min');
-  await page.selectOption('#profileExperience','Iniciante');
-  await page.selectOption('#profilePrimaryFocus','Peito');
-  await page.locator('label.day-chip:has(input[value="seg"])').click();
-  await page.locator('label.day-chip:has(input[value="qua"])').click();
-  await page.locator('label.day-chip:has(input[value="sex"])').click();
-  await page.locator('label.check-chip:has(input[name="equipment"][value="Halteres"])').click();
-  await page.locator('label.check-chip:has(input[name="equipment"][value="Elásticos"])').click();
-  await page.locator('label.check-chip:has(input[name="equipment"][value="Banco"])').click();
-  await page.click('#profileForm button[type="submit"]');
+  await page.waitForSelector('#appOnboarding:not([hidden])');
+  assert.equal(await page.locator('.nav button svg').count(),5,'bottom navigation was not converted to app navigation');
 
+  await page.fill('#appOnboardingInput','Teste MVP');
+  await page.click('#appOnboardingNext');
+  await page.locator('[data-choice="Hipertrofia"]').click();
+  await page.click('#appOnboardingNext');
+  await page.locator('[data-choice="3"]').click();
+  await page.click('#appOnboardingNext');
+  await page.locator('[data-choice="seg"]').click();
+  await page.locator('[data-choice="qua"]').click();
+  await page.locator('[data-choice="sex"]').click();
+  await page.click('#appOnboardingNext');
+  await page.locator('[data-choice="30–45 min"]').click();
+  await page.click('#appOnboardingNext');
+  await page.locator('[data-choice="Iniciante"]').click();
+  await page.click('#appOnboardingNext');
+  await page.locator('[data-choice="Halteres"]').click();
+  await page.locator('[data-choice="Elásticos"]').click();
+  await page.locator('[data-choice="Banco"]').click();
+  await page.click('#appOnboardingNext');
+  await page.locator('[data-choice="Peito"]').click();
+  await page.click('#appOnboardingNext');
+
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.playerProfile.v1')||'null')?.name==='Teste MVP');
+  await page.waitForTimeout(1200);
+  await page.waitForLoadState('networkidle');
   await page.waitForFunction(()=>['PLANO GERADO','PLANO PARCIAL'].includes(document.getElementById('prescriptionState')?.textContent||''));
+  await page.waitForSelector('#appHomeShell');
+
   const plan = await page.evaluate(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null'));
   assert.ok(plan?.sessions?.length>=1,'training plan was not created');
   assert.ok(Array.isArray(plan.unmetTargets),'plan does not expose unmet targets');
+  assert.equal((await page.locator('.app-brand-copy strong').textContent()).includes('Teste'),true,'app home did not use player identity');
 
   await page.evaluate(()=>location.hash='#missao');
   await page.waitForSelector('#exerciseList .execution-exercise');
@@ -49,13 +61,13 @@ const assert = require('node:assert/strict');
   await page.waitForSelector('#preMissionModal:not([hidden])');
   await page.click('#confirmCheckin');
   await page.waitForFunction(()=>document.body.classList.contains('training-mode-active'));
+  assert.equal(await page.locator('.execution-exercise:visible').count(),1,'focused workout should expose one exercise at a time');
 
-  const firstRow=page.locator('.set-log-row').first();
-  await firstRow.locator('.set-load').fill('10 kg');
-  await firstRow.locator('.set-reps').fill('10');
-  await firstRow.locator('.set-rir').selectOption('2');
-  await firstRow.locator('.set-done').click();
-  await page.waitForFunction(()=>document.querySelector('.set-log-row')?.classList.contains('completed'));
+  let row=page.locator('.training-current .set-log-row:not(.completed)').first();
+  await row.locator('.set-load').fill('10');
+  await row.locator('.set-reps').fill('10');
+  await row.locator('.set-rir').selectOption('2');
+  await row.locator('.set-done').click();
   await page.waitForTimeout(350);
 
   const draft=await page.evaluate(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.activeWorkoutDraft.v1')||'null'));
@@ -63,10 +75,9 @@ const assert = require('node:assert/strict');
 
   await page.click('#pauseTraining');
   await page.waitForFunction(()=>document.getElementById('pauseTraining')?.textContent==='CONFIRMAR PAUSA');
-  await Promise.all([
-    page.waitForLoadState('networkidle'),
-    page.click('#pauseTraining')
-  ]);
+  await page.click('#pauseTraining');
+  await page.waitForTimeout(450);
+  await page.waitForLoadState('networkidle');
   await page.waitForSelector('#exerciseList .execution-exercise');
   await page.waitForFunction(()=>document.getElementById('startBtn')?.textContent.includes('RETOMAR'));
   assert.equal(await page.locator('.set-log-row').first().evaluate(el=>el.classList.contains('completed')),true,'completed set was not restored after pause');
@@ -76,17 +87,22 @@ const assert = require('node:assert/strict');
   await page.click('#confirmCheckin');
   await page.waitForFunction(()=>document.body.classList.contains('training-mode-active'));
 
-  const rows=page.locator('.set-log-row');
-  const rowCount=await rows.count();
-  for(let i=0;i<rowCount;i++){
-    const row=rows.nth(i);
-    const completed=await row.evaluate(el=>el.classList.contains('completed'));
-    if(completed)continue;
-    await row.locator('.set-load').fill('10 kg');
-    await row.locator('.set-reps').fill('10');
-    await row.locator('.set-rir').selectOption('2');
-    await row.locator('.set-done').click();
+  const totalRows=await page.locator('.set-log-row').count();
+  for(let i=0;i<totalRows+5;i++){
+    const pending=page.locator('.training-current .set-log-row:not(.completed)').first();
+    if(await pending.count()){
+      await pending.locator('.set-load').fill('10');
+      await pending.locator('.set-reps').fill('10');
+      await pending.locator('.set-rir').selectOption('2');
+      await pending.locator('.set-done').click();
+      await page.waitForTimeout(80);
+      continue;
+    }
+    const remaining=await page.locator('.set-log-row:not(.completed)').count();
+    if(remaining===0)break;
+    await page.waitForTimeout(100);
   }
+  assert.equal(await page.locator('.set-log-row:not(.completed)').count(),0,'focused workout did not advance through every prescribed set');
 
   await page.click('#startBtn');
   await page.waitForSelector('#completionModal:not([hidden])');
@@ -98,10 +114,20 @@ const assert = require('node:assert/strict');
   const draftAfter=await page.evaluate(()=>localStorage.getItem('sistemaEvolucao.activeWorkoutDraft.v1'));
   assert.equal(draftAfter,null,'workout draft was not cleared after completion');
 
+  await page.evaluate(()=>location.hash='#progresso');
+  await page.waitForSelector('#appProgressDashboard');
+  assert.equal((await page.locator('.app-progress-metric').first().textContent()).includes('1'),true,'progress dashboard did not reflect completed mission');
+
+  const swReady=await page.evaluate(async()=>{
+    if(!('serviceWorker' in navigator))return true;
+    try{await navigator.serviceWorker.ready;return true;}catch{return false;}
+  });
+  assert.equal(swReady,true,'PWA service worker did not become ready');
+
   if(pageErrors.length)throw new Error(`Page errors: ${pageErrors.join(' | ')}`);
   if(consoleErrors.length)throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);
 
-  console.log(`MVP browser smoke passed: first access blocked, pause restored, ${exerciseCount} exercises, ${rowCount} sets, ${plan.unmetTargets.length} unmet targets.`);
+  console.log(`MVP app smoke passed: onboarding, focused workout, pause/resume, progress and PWA shell. ${exerciseCount} exercises, ${totalRows} sets.`);
   await browser.close();
 })().catch(error=>{
   console.error(error);
