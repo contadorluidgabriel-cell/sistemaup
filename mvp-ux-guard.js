@@ -207,22 +207,43 @@
     styles.href='app-polish-extra.css';
     document.head.appendChild(styles);
   }
+
+  function loadCloud(){
+    if(document.querySelector('script[src="supabase-config.js"]'))return;
+    const config=document.createElement('script');
+    config.src='supabase-config.js';
+    config.defer=true;
+    config.onload=()=>{
+      if(document.querySelector('script[src="cloud-sync.js"]'))return;
+      const cloud=document.createElement('script');
+      cloud.src='cloud-sync.js';
+      cloud.defer=true;
+      document.body.appendChild(cloud);
+    };
+    document.body.appendChild(config);
+  }
+
   if(!document.querySelector('script[src="app-experience.js"]')){
     const script=document.createElement('script');
     script.src='app-experience.js';
     script.defer=true;
     script.onload=()=>{
-      if(document.querySelector('script[src="app-polish-extra.js"]'))return;
+      if(!document.querySelector('script[src="app-polish-extra.js"]')){
+        const extra=document.createElement('script');
+        extra.src='app-polish-extra.js';
+        extra.defer=true;
+        document.body.appendChild(extra);
+      }
+      loadCloud();
+    };
+    document.body.appendChild(script);
+  }else{
+    if(!document.querySelector('script[src="app-polish-extra.js"]')){
       const extra=document.createElement('script');
       extra.src='app-polish-extra.js';
       extra.defer=true;
       document.body.appendChild(extra);
-    };
-    document.body.appendChild(script);
-  }else if(!document.querySelector('script[src="app-polish-extra.js"]')){
-    const extra=document.createElement('script');
-    extra.src='app-polish-extra.js';
-    extra.defer=true;
-    document.body.appendChild(extra);
+    }
+    loadCloud();
   }
 })();
