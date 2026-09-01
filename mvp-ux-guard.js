@@ -13,6 +13,17 @@
     return plan&&Array.isArray(plan.sessions)&&plan.sessions.length?plan:null;
   }
 
+  function bindFirstAccessCta(start){
+    if(!start||start.dataset.firstAccessBound==='true')return;
+    start.dataset.firstAccessBound='true';
+    start.addEventListener('click',event=>{
+      if(realPlan()||start.dataset.state!=='blocked')return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      location.hash='#perfil';
+    },true);
+  }
+
   function neutralizeFirstAccess(){
     const savedProfile=readJSON(PROFILE_KEY,null);
     const plan=realPlan();
@@ -44,9 +55,10 @@
     if(missionXp&&missionXp.textContent!=='AGUARDA PERFIL')missionXp.textContent='AGUARDA PERFIL';
     if(list&&!list.querySelector('[data-first-access-guard="true"]'))list.innerHTML=empty;
     if(start){
-      start.disabled=true;
-      if(start.textContent!=='CONFIGURE O PERFIL')start.textContent='CONFIGURE O PERFIL';
+      start.disabled=false;
+      if(start.textContent!=='CONFIGURAR PERFIL')start.textContent='CONFIGURAR PERFIL';
       start.dataset.state='blocked';
+      bindFirstAccessCta(start);
     }
     if(adapt)adapt.disabled=true;
   }
