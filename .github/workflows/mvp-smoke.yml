@@ -22,6 +22,7 @@ jobs:
           node --check exercise-history.js
           node --check training-experience.js
           node --check mvp-audit.js
+          node --check mvp-ux-guard.js
 
       - name: Validate required static files
         run: |
