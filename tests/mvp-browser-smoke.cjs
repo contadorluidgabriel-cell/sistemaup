@@ -26,9 +26,10 @@ const assert = require('node:assert/strict');
   await page.locator('label.check-chip:has(input[name="equipment"][value="Banco"])').click();
   await page.click('#profileForm button[type="submit"]');
 
-  await page.waitForFunction(()=>document.getElementById('prescriptionState')?.textContent==='PLANO GERADO');
+  await page.waitForFunction(()=>['PLANO GERADO','PLANO PARCIAL'].includes(document.getElementById('prescriptionState')?.textContent||''));
   const plan = await page.evaluate(()=>JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null'));
   assert.ok(plan?.sessions?.length>=1,'training plan was not created');
+  assert.ok(Array.isArray(plan.unmetTargets),'plan does not expose unmet targets');
 
   await page.evaluate(()=>location.hash='#missao');
   await page.waitForSelector('#exerciseList .execution-exercise');
@@ -89,7 +90,7 @@ const assert = require('node:assert/strict');
   if(pageErrors.length)throw new Error(`Page errors: ${pageErrors.join(' | ')}`);
   if(consoleErrors.length)throw new Error(`Console errors: ${consoleErrors.join(' | ')}`);
 
-  console.log(`MVP browser smoke passed: ${exerciseCount} exercises, ${rowCount} sets.`);
+  console.log(`MVP browser smoke passed: ${exerciseCount} exercises, ${rowCount} sets, ${plan.unmetTargets.length} unmet targets.`);
   await browser.close();
 })().catch(error=>{
   console.error(error);
