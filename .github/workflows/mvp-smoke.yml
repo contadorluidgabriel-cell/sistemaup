@@ -25,6 +25,8 @@ jobs:
           node --check mvp-ux-guard.js
           node --check app-experience.js
           node --check app-polish-extra.js
+          node --check supabase-config.js
+          node --check cloud-sync.js
           node --check sw.js
 
       - name: Validate required static files
@@ -34,6 +36,10 @@ jobs:
           test -f screens.css
           test -f app-experience.css
           test -f app-polish-extra.css
+          test -f supabase-config.js
+          test -f cloud-sync.js
+          test -f cloud-sync.css
+          test -f supabase/schema.sql
           test -f manifest.webmanifest
           test -f app-icon.svg
           test -f sw.js
@@ -41,3 +47,9 @@ jobs:
 
       - name: Validate manifest JSON
         run: node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8'))"
+
+      - name: Validate isolated cloud mode
+        run: |
+          grep -q "enabled:false" supabase-config.js
+          grep -q "enable row level security" supabase/schema.sql
+          grep -q "muscle_state" supabase/schema.sql
