@@ -147,11 +147,18 @@
   }
 
   function handleEditorControls(event){
+    if(event.target.closest('#openPlanEditor')){
+      setTimeout(decorateEditor,0);
+      setTimeout(decorateEditor,60);
+      return;
+    }
+
     const add=event.target.closest('.sp-add-series');
     if(add){
       const exerciseEl=add.closest('.pe-exercise');
       const plus=exerciseEl?.querySelector('[data-act="sets-plus"]');
       if(plus)plus.click();
+      setTimeout(decorateEditor,0);
       return;
     }
 
@@ -164,6 +171,7 @@
       entry.series.splice(index,1);
       const minus=exerciseEl.querySelector('[data-act="sets-minus"]');
       if(minus){suppressSetControl=minus;minus.click();}
+      setTimeout(decorateEditor,0);
       return;
     }
 
@@ -179,6 +187,7 @@
           entry.series.push(normalizedSeriesItem(base));
         }
       }else if(entry.series.length>1)entry.series.pop();
+      setTimeout(decorateEditor,0);
       return;
     }
 
@@ -242,12 +251,14 @@
   function scheduleRefresh(){
     if(observerQueued)return;
     observerQueued=true;
-    requestAnimationFrame(refresh);
+    if(document.visibilityState==='hidden')setTimeout(refresh,0);
+    else requestAnimationFrame(refresh);
   }
 
   ensureStyles();
   document.addEventListener('click',handleEditorControls);
   const observer=new MutationObserver(scheduleRefresh);
   observer.observe(document.body,{childList:true,subtree:true});
+  window.SistemaSeriesPrescription={decorateEditor,decorateExecution,save:saveSeriesPlan,isReady:true};
   refresh();
 })();
