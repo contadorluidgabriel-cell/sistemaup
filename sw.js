@@ -1,4 +1,4 @@
-const CACHE='sistema-evolucao-shell-v12';
+const CACHE='sistema-evolucao-shell-v13';
 const CORE=[
   './','./index.html','./styles.css','./screens.css','./app.js',
   './volume-engine.js','./volume-engine.css','./prescription-engine.js','./prescription-engine.css',
