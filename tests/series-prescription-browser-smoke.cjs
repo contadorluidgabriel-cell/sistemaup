@@ -23,12 +23,29 @@ const assert = require('node:assert/strict');
   await page.selectOption('#profileDuration',{label:'30–45 min'});
   await page.selectOption('#profileExperience',{label:'Intermediário'});
   await page.selectOption('#profileSplitPreference','pull-push-lower-core');
-  await page.locator('input[name="availableDay"][value="seg"]').check({force:true});
-  await page.locator('input[name="availableDay"][value="qua"]').check({force:true});
-  await page.locator('input[name="availableDay"][value="sex"]').check({force:true});
-  await page.locator('input[name="equipment"][value="Halteres"]').check({force:true});
-  await page.locator('input[name="equipment"][value="Elásticos"]').check({force:true});
-  await page.locator('input[name="equipment"][value="Banco"]').check({force:true});
+
+  await page.evaluate(()=>{
+    const setChecks=(name,values)=>{
+      document.querySelectorAll(`input[name="${name}"]`).forEach(input=>{
+        const checked=values.includes(input.value);
+        if(input.checked!==checked){
+          input.checked=checked;
+          input.dispatchEvent(new Event('input',{bubbles:true}));
+          input.dispatchEvent(new Event('change',{bubbles:true}));
+        }
+      });
+    };
+    setChecks('availableDay',['seg','qua','sex']);
+    setChecks('equipment',['Halteres','Elásticos','Banco']);
+  });
+
+  const selectedContext=await page.evaluate(()=>({
+    days:[...document.querySelectorAll('input[name="availableDay"]:checked')].map(el=>el.value),
+    equipment:[...document.querySelectorAll('input[name="equipment"]:checked')].map(el=>el.value)
+  }));
+  assert.deepEqual(selectedContext.days.sort(),['qua','seg','sex'],'test setup did not establish three available days');
+  assert.deepEqual(selectedContext.equipment.sort(),['Banco','Elásticos','Halteres'].sort(),'test setup did not establish equipment');
+
   await page.click('#profileForm button[type="submit"]');
 
   await page.waitForFunction(()=>{
