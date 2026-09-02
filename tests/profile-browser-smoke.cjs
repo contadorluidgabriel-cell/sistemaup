@@ -25,11 +25,11 @@ const assert = require('node:assert/strict');
   await page.selectOption('#profileDuration',{label:'30–45 min'});
   await page.selectOption('#profileExperience',{label:'Iniciante'});
   await page.selectOption('#profilePrimaryFocus',{label:'Peito'});
-  await page.locator('input[name="availableDay"][value="seg"]').check();
-  await page.locator('input[name="availableDay"][value="qua"]').check();
-  await page.locator('input[name="availableDay"][value="sex"]').check();
-  await page.locator('input[name="equipment"][value="Halteres"]').check();
-  await page.locator('input[name="equipment"][value="Banco"]').check();
+  await page.locator('input[name="availableDay"][value="seg"]').check({force:true});
+  await page.locator('input[name="availableDay"][value="qua"]').check({force:true});
+  await page.locator('input[name="availableDay"][value="sex"]').check({force:true});
+  await page.locator('input[name="equipment"][value="Halteres"]').check({force:true});
+  await page.locator('input[name="equipment"][value="Banco"]').check({force:true});
 
   await page.click('#profileForm button[type="submit"]');
   await page.waitForFunction(()=>{
