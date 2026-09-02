@@ -34,6 +34,10 @@
     return value===PREFERRED_SPLIT?'Puxar · Empurrar · Inferior + Core':'Sistema decide';
   }
 
+  function setTextIfChanged(node,value){
+    if(node&&node.textContent!==value)node.textContent=value;
+  }
+
   function ensureProfileField(){
     if(document.getElementById('profileSplitPreference'))return;
     const experience=document.getElementById('profileExperience')?.closest('.field');
@@ -66,8 +70,7 @@
 
   function updateSplitSummary(){
     ensurePlanSummary();
-    const target=document.getElementById('planSplitPreference');
-    if(target)target.textContent=preferenceLabel();
+    setTextIfChanged(document.getElementById('planSplitPreference'),preferenceLabel());
   }
 
   function persistPreferenceIntoProfile(){
@@ -75,7 +78,7 @@
     const value=select?.value||preference();
     write(SPLIT_KEY,value);
     const profile=read(PROFILE_KEY,null);
-    if(profile){profile.splitPreference=value;write(PROFILE_KEY,profile);}
+    if(profile&&profile.splitPreference!==value){profile.splitPreference=value;write(PROFILE_KEY,profile);}
     updateSplitSummary();
     return value;
   }
@@ -109,9 +112,7 @@
   function preferredCandidate(muscle,used,engine,profile){
     const prefs=engine.prefs?.()||{pinned:[],liked:[],avoided:[]};
     const source=muscle==='Core'?CORE_CATALOG:engine.catalog||[];
-    const compatible=source.filter(ex=>ex.primary===muscle&&!used.has(ex.id)&&!prefs.avoided?.includes(ex.id)&&(muscle==='Core'||engine.compatible(ex,profile)));
-    const fallback=source.filter(ex=>ex.primary===muscle&&!prefs.avoided?.includes(ex.id)&&(muscle==='Core'||engine.compatible(ex,profile)));
-    const candidates=compatible.length?compatible:fallback;
+    const candidates=source.filter(ex=>ex.primary===muscle&&!used.has(ex.id)&&!prefs.avoided?.includes(ex.id)&&(muscle==='Core'||engine.compatible(ex,profile)));
     return [...candidates].sort((a,b)=>score(b)-score(a))[0]||null;
     function score(ex){return (prefs.pinned?.includes(ex.id)?100:0)+(prefs.liked?.includes(ex.id)?20:0)+(ex.type==='compound'?5:0);}
   }
@@ -187,7 +188,8 @@
     if(!engine||!base?.sessions)return false;
     if(base.sessions.length!==3){
       const note=document.querySelector('.split-preference-note');
-      if(note)note.textContent='Esta divisão é aplicada quando sua rotina possui 3 sessões de musculação. Com outra frequência, o Motor mantém uma distribuição compatível até termos um editor de divisão personalizada por dia.';
+      const message='Esta divisão é aplicada quando sua rotina possui 3 sessões de musculação. Com outra frequência, o Motor mantém uma distribuição compatível até termos um editor de divisão personalizada por dia.';
+      setTextIfChanged(note,message);
       return false;
     }
     if(base.splitPreference===PREFERRED_SPLIT&&base.generator==='system-v3-preferred-split')return true;
@@ -273,7 +275,20 @@
         setTimeout(()=>applyPreferredSplit({reload:true}),180);
       });
     }
-    const observer=new MutationObserver(()=>{ensureProfileField();ensurePlanSummary();updateSplitSummary();decorateEditor();bindEditorSave();});
+
+    let observerQueued=false;
+    const observer=new MutationObserver(()=>{
+      if(observerQueued)return;
+      observerQueued=true;
+      requestAnimationFrame(()=>{
+        observerQueued=false;
+        ensureProfileField();
+        ensurePlanSummary();
+        updateSplitSummary();
+        decorateEditor();
+        bindEditorSave();
+      });
+    });
     observer.observe(document.body,{childList:true,subtree:true});
     decorateEditor();
     bindEditorSave();
