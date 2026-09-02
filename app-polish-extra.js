@@ -21,6 +21,23 @@
     flashTimer=setTimeout(()=>el.classList.remove('show'),900);
   }
 
+  function routeTarget(){
+    return location.hash.replace('#','').toLowerCase();
+  }
+
+  function closeOnboardingForRoute(){
+    if(routeTarget()!=='perfil')return;
+    const onboarding=document.getElementById('appOnboarding');
+    if(onboarding&&!onboarding.hidden){
+      onboarding.hidden=true;
+      document.body.style.overflow='';
+    }
+    if(typeof window.openView==='function'){
+      const profile=document.getElementById('view-perfil');
+      if(profile?.hidden)window.openView('perfil',{updateHash:false,scroll:false});
+    }
+  }
+
   function ensureTechnicalDisclosure(){
     [
       ['volumeArchitecture','VOLUME'],
@@ -70,6 +87,10 @@
   }
 
   document.addEventListener('click',event=>{
+    const routeControl=event.target.closest('.nav button[data-target],[data-go]');
+    const target=routeControl?.dataset.target||routeControl?.dataset.go;
+    if(target==='perfil')setTimeout(closeOnboardingForRoute,0);
+
     const setButton=event.target.closest('.set-done');
     if(setButton){
       const row=setButton.closest('.set-log-row');
@@ -104,12 +125,15 @@
     ensureTechnicalDisclosure();
     ensureConnectionState();
     watchCompletion();
+    closeOnboardingForRoute();
   });
   observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
+  window.addEventListener('hashchange',()=>setTimeout(closeOnboardingForRoute,0));
   window.addEventListener('online',()=>{ensureConnectionState();flash('CONEXÃO RESTAURADA','success');});
   window.addEventListener('offline',()=>{ensureConnectionState();flash('MODO OFFLINE');});
 
   ensureTechnicalDisclosure();
   ensureConnectionState();
   watchCompletion();
+  setTimeout(closeOnboardingForRoute,180);
 })();
