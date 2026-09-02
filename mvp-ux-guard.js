@@ -9,22 +9,12 @@
   const writeJSON=(key,value)=>localStorage.setItem(key,JSON.stringify(value));
 
   function openProfileViewNow(){
-    if(typeof window.openView==='function'){
-      window.openView('perfil',{updateHash:true,scroll:true});
+    const profileNav=document.querySelector('.nav button[data-target="perfil"]');
+    if(profileNav){
+      profileNav.click();
       return;
     }
-    document.querySelectorAll('.view[data-view]').forEach(view=>{
-      const active=view.dataset.view==='perfil';
-      view.hidden=!active;
-      view.classList.toggle('active-view',active);
-    });
-    document.querySelectorAll('.nav button[data-target]').forEach(button=>{
-      const active=button.dataset.target==='perfil';
-      button.classList.toggle('active',active);
-      button.setAttribute('aria-current',active?'page':'false');
-    });
-    if(location.hash!=='#perfil')history.pushState({view:'perfil'},'','#perfil');
-    window.scrollTo({top:0,behavior:'smooth'});
+    if(location.hash!=='#perfil')location.hash='#perfil';
   }
 
   function realPlan(){
@@ -39,7 +29,7 @@
       if(realPlan()||start.dataset.state!=='blocked')return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      location.hash='#perfil';
+      openProfileViewNow();
     },true);
   }
 
