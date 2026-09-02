@@ -25,6 +25,27 @@
     return location.hash.replace('#','').toLowerCase();
   }
 
+  function activateProfileView(){
+    const onboarding=document.getElementById('appOnboarding');
+    if(onboarding&&!onboarding.hidden)onboarding.hidden=true;
+    document.body.style.overflow='';
+
+    document.querySelectorAll('.view[data-view]').forEach(view=>{
+      const active=view.dataset.view==='perfil';
+      view.hidden=!active;
+      view.classList.toggle('active-view',active);
+    });
+    document.querySelectorAll('.nav button[data-target]').forEach(button=>{
+      const active=button.dataset.target==='perfil';
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-current',active?'page':'false');
+    });
+
+    if(location.hash!=='#perfil')history.pushState({view:'perfil'},'','#perfil');
+    document.title='Perfil · Sistema de Evolução';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
   function closeOnboardingForRoute(){
     if(routeTarget()!=='perfil')return;
     const onboarding=document.getElementById('appOnboarding');
@@ -32,11 +53,17 @@
       onboarding.hidden=true;
       document.body.style.overflow='';
     }
-    if(typeof window.openView==='function'){
-      const profile=document.getElementById('view-perfil');
-      if(profile?.hidden)window.openView('perfil',{updateHash:false,scroll:false});
-    }
+    const profile=document.getElementById('view-perfil');
+    if(profile?.hidden)activateProfileView();
   }
+
+  window.addEventListener('click',event=>{
+    const blockedProfileCta=event.target?.closest?.('#startBtn[data-state="blocked"]');
+    if(!blockedProfileCta)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    activateProfileView();
+  },true);
 
   function ensureTechnicalDisclosure(){
     [
