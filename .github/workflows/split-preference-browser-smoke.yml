@@ -1,0 +1,42 @@
+name: Split Preference Browser Smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: split-preference-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  split-preference-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start static app
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/sistemaup-http.log 2>&1 &
+          for i in {1..20}; do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/sistemaup-http.log
+          exit 1
+
+      - name: Validate preferred split and editable prescription
+        run: node tests/split-preference-browser-smoke.cjs
