@@ -7,9 +7,11 @@
   const BACKUP_KEY='sistemaEvolucao.trainingPlan.beforeGroupSplit.v1';
   const PREFERRED_SPLIT='pull-push-lower-core';
   const GENERATOR='system-v3-group-split-flex';
+  const ARCH_VERSION='group-frequency-v3-identical';
 
   const read=(key,fallback=null)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}};
   const write=(key,value)=>localStorage.setItem(key,JSON.stringify(value));
+  const clone=value=>JSON.parse(JSON.stringify(value));
   const toast=message=>{const el=document.getElementById('toast');if(!el)return;el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2600);};
 
   const CORE_CATALOG=[
@@ -150,12 +152,11 @@
   function labelsFor(pattern){
     const totals=pattern.reduce((acc,kind)=>(acc[kind]=(acc[kind]||0)+1,acc),{});
     const seen={};
-    const base={pull:'Puxar · Costas + Bíceps',push:'Empurrar · Peito + Ombros + Tríceps',lower:'Inferior + Core'};
+    const base={pull:'A · Costas + Bíceps',push:'B · Peito + Ombros + Tríceps',lower:'C · Inferior + Core'};
     return pattern.map(kind=>{
       seen[kind]=(seen[kind]||0)+1;
       if(totals[kind]===1)return base[kind];
-      const suffix=String.fromCharCode(64+seen[kind]);
-      return `${base[kind]} ${suffix}`;
+      return `${base[kind]} · ${seen[kind]}`;
     });
   }
 
@@ -164,7 +165,15 @@
     const pattern=patternFor(count,profile);
     if(!pattern)return null;
     const labels=labelsFor(pattern);
-    const sessions=pattern.map((kind,index)=>buildSession(kind,labels[index],base,profile,engine)).map((session,index)=>({...session,index:index+1}));
+    const templates={};
+    const sessions=pattern.map((kind,index)=>{
+      if(!templates[kind])templates[kind]=buildSession(kind,labels[index],base,profile,engine);
+      const session=clone(templates[kind]);
+      session.label=labels[index];
+      session.repeatOf=templates[kind].label;
+      session.repeatMode='identical';
+      return session;
+    }).map((session,index)=>({...session,index:index+1}));
     if(sessions.some(session=>!session.exercises.length))return null;
     const totals=engine.totalsFor(sessions);
     const unmetTargets=(base.targets||[]).filter(t=>(totals[t.muscle]||0)+.01<Number(t.min||0)).map(t=>({muscle:t.muscle,target:t.min,actual:totals[t.muscle]||0,role:t.role,reason:'divisão escolhida, frequência, capacidade, equipamento ou volume atual'}));
@@ -174,8 +183,9 @@
       generator:GENERATOR,
       generatedAt:new Date().toISOString(),
       splitPreference:PREFERRED_SPLIT,
-      splitArchitectureVersion:'group-frequency-v2',
-      architecture:{sessions:count,reason:`Divisão por grupos escolhida pelo jogador e distribuída em ${count} sessões sem misturar puxar, empurrar e inferiores na mesma missão.`},
+      splitArchitectureVersion:ARCH_VERSION,
+      repeatedSessionsMode:'identical',
+      architecture:{sessions:count,reason:`Divisão por grupos escolhida pelo jogador em ${count} sessões. Quando um grupo se repete na semana, a sessão é uma cópia idêntica: mesmos exercícios, ordem, séries, repetições, RIR e descanso.`},
       sessions,
       equivalentVolume:totals,
       unmetTargets,
@@ -188,10 +198,10 @@
     const note=document.querySelector('.split-preference-note');
     if(!note)return;
     if(count<3){
-      note.textContent='Com menos de 3 sessões não é possível separar Puxar, Empurrar e Inferior + Core sem misturar grupos. O Sistema mantém uma divisão compatível.';
+      note.textContent='Com menos de 3 sessões não é possível separar A, B e C sem misturar grupos. O Sistema mantém uma divisão compatível.';
       return;
     }
-    note.textContent=`Divisão por grupos ativa em ${count} sessões. O Sistema repete os grupos necessários conforme frequência e prioridade, sem transformar a sessão em corpo inteiro.`;
+    note.textContent=`Divisão por grupos ativa em ${count} sessões. Quando A ou B se repetirem na semana, serão exatamente o mesmo treino.`;
   }
 
   function apply({reload=true}={}){
@@ -203,16 +213,16 @@
     const count=base.sessions.length;
     updateNote(count);
     if(count<3)return false;
-    if(base.generator===GENERATOR&&base.splitArchitectureVersion==='group-frequency-v2'&&base.sessions.length===count&&isGroupedPlan(base))return true;
-    if(base.userEdited&&base.splitPreference===PREFERRED_SPLIT&&isGroupedPlan(base))return true;
+    if(base.generator===GENERATOR&&base.splitArchitectureVersion===ARCH_VERSION&&base.sessions.length===count&&isGroupedPlan(base))return true;
+    if(base.userEdited&&base.splitPreference===PREFERRED_SPLIT&&base.splitArchitectureVersion===ARCH_VERSION&&isGroupedPlan(base))return true;
     const next=buildPlan(base,profile,engine);
     if(!next)return false;
-    if(!isGroupedPlan(base))write(BACKUP_KEY,{savedAt:new Date().toISOString(),plan:base});
+    if(!isGroupedPlan(base)||base.userEdited||base.splitArchitectureVersion!==ARCH_VERSION)write(BACKUP_KEY,{savedAt:new Date().toISOString(),plan:base});
     write(GENERATED_KEY,next);
     write(PLAN_KEY,next);
     localStorage.setItem(SESSION_KEY,'0');
-    window.dispatchEvent(new CustomEvent('sistema:group-split-applied',{detail:{sessions:count,migrated:!isGroupedPlan(base)}}));
-    if(reload){toast(`Divisão por grupos aplicada em ${count} sessões.`);setTimeout(()=>location.reload(),220);}
+    window.dispatchEvent(new CustomEvent('sistema:group-split-applied',{detail:{sessions:count,migrated:true,repeatMode:'identical'}}));
+    if(reload){toast(`Divisão A/B/C aplicada. Repetições idênticas.`);setTimeout(()=>location.reload(),220);}
     return true;
   }
 
