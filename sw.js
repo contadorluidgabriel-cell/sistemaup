@@ -1,4 +1,4 @@
-const CACHE='sistema-evolucao-shell-v15';
+const CACHE='sistema-evolucao-shell-v16';
 const CORE=[
   './','./index.html','./styles.css','./screens.css','./app.js',
   './volume-engine.js','./volume-engine.css','./prescription-engine.js','./prescription-engine.css',
@@ -6,7 +6,7 @@ const CORE=[
   './mission-adapter-v2.js','./exercise-history.js','./exercise-history.css',
   './training-experience.js','./training-experience.css','./mvp-audit.js','./mvp-ux-guard.js',
   './app-experience.js','./app-experience.css','./app-polish-extra.js','./app-polish-extra.css',
-  './training-preferences.js','./training-preferences.css','./series-prescription.js','./series-prescription.css','./secondary-mission.js','./progress-live.js',
+  './training-preferences.js','./training-preferences.css','./group-split-engine.js','./series-prescription.js','./series-prescription.css','./secondary-mission.js','./progress-live.js',
   './supabase-config.js','./cloud-sync.js','./cloud-sync.css',
   './manifest.webmanifest','./app-icon.svg'
 ];
