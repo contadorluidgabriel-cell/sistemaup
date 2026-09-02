@@ -1,4 +1,11 @@
 (()=>{
+  if(!document.querySelector('script[data-series-prescription]')){
+    const seriesScript=document.createElement('script');
+    seriesScript.src='series-prescription.js';
+    seriesScript.dataset.seriesPrescription='true';
+    document.body.appendChild(seriesScript);
+  }
+
   const PROFILE_KEY='sistemaEvolucao.playerProfile.v1';
   const HISTORY_KEY='sistemaEvolucao.secondaryMissionHistory.v1';
   const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'null')??fallback;}catch{return fallback;}};
