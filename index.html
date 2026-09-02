@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#06080d">
   <title>Sistema de Evolução</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="apple-touch-icon" href="app-icon.svg">
 </head>
 <body>
   <div class="toast" id="toast"></div>
@@ -60,8 +61,8 @@
         <div class="section-head"><div><div class="kicker">SUPORTE AO OBJETIVO</div><h2>Protocolos complementares</h2></div><small>OPCIONAL</small></div>
         <p class="muted note">Musculação é o núcleo. Aeróbico, mobilidade e condicionamento entram apenas quando ajudam seu objetivo e cabem na recuperação.</p>
         <div class="card complementary-card" id="complementaryCard">
-          <div><span class="tag">CONFIGURAÇÃO DO JOGADOR</span><strong id="complementaryTitle">Nenhum protocolo complementar ativo</strong><p id="complementaryText">O Sistema não adiciona cardio ou HIIT por padrão.</p></div>
-          <button class="ghost-action" data-go="perfil">CONFIGURAR</button>
+          <div><span class="tag">MISSÃO SECUNDÁRIA · OPCIONAL</span><strong id="complementaryTitle">Nenhum protocolo complementar ativo</strong><p id="complementaryText">O Sistema não adiciona cardio ou HIIT por padrão.</p><small id="secondaryMissionStatus" class="muted"></small></div>
+          <div class="complementary-actions"><button class="ghost-action" data-go="perfil" id="secondaryConfigure">CONFIGURAR</button><button class="start secondary-start" id="secondaryMissionBtn" hidden>REGISTRAR ATIVIDADE</button></div>
         </div>
       </section>
     </section>
@@ -221,7 +222,7 @@
         </form>
       </section>
 
-      <div class="system-msg"><div class="kicker">◆ PRIVACIDADE LOCAL</div><p>Nesta versão, essas preferências ficam salvas apenas neste navegador. Mais tarde podemos ligar esse perfil ao banco de dados.</p></div>
+      <div class="system-msg"><div class="kicker">◆ DADOS PROTEGIDOS</div><p>Seu perfil e histórico ficam disponíveis neste dispositivo e podem ser sincronizados com sua conta quando a conexão estiver ativa.</p></div>
     </section>
   </main>
 
@@ -251,5 +252,8 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="training-preferences.js"></script>
+  <script src="secondary-mission.js"></script>
+  <script src="progress-live.js"></script>
 </body>
 </html>
