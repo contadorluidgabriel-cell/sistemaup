@@ -11,8 +11,11 @@ const assert = require('node:assert/strict');
   page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});
 
   await page.addInitScript(()=>{
-    localStorage.clear();
-    localStorage.setItem('sistemaEvolucao.onboarding.v1',JSON.stringify({testOnly:true,version:1}));
+    if(!sessionStorage.getItem('seriesQaInitialized')){
+      localStorage.clear();
+      localStorage.setItem('sistemaEvolucao.onboarding.v1',JSON.stringify({testOnly:true,version:1}));
+      sessionStorage.setItem('seriesQaInitialized','1');
+    }
   });
   await page.goto('http://127.0.0.1:4173/#perfil',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#profileSplitPreference');
@@ -52,12 +55,9 @@ const assert = require('node:assert/strict');
     try{return JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null')?.generator==='system-v3-preferred-split';}
     catch{return false;}
   });
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(650);
 
-  await page.evaluate(()=>location.hash='#plano');
-  await page.waitForFunction(()=>location.hash==='#plano'&&document.getElementById('openPlanEditor')?.isConnected);
-  await page.waitForTimeout(250);
+  await page.goto('http://127.0.0.1:4173/#plano',{waitUntil:'domcontentloaded'});
+  await page.waitForSelector('#openPlanEditor');
   await page.evaluate(()=>document.getElementById('openPlanEditor')?.click());
   await page.waitForSelector('#planEditorModal:not([hidden]) .sp-editor');
 
@@ -94,7 +94,7 @@ const assert = require('node:assert/strict');
   assert.equal(saved.seriesPlan.at(-1).load,'10 kg','added series load did not persist');
   assert.equal(saved.seriesPlan.at(-1).reps,'12','added series reps did not persist');
 
-  await page.evaluate(()=>location.hash='#missao');
+  await page.goto('http://127.0.0.1:4173/#missao',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('.execution-exercise .sp-set-target');
   const firstCard=page.locator('.execution-exercise').first();
   assert.match(await firstCard.locator('.sp-set-target').first().textContent(),/12 kg.*10 reps/,'planned target was not shown during execution');
