@@ -1,4 +1,4 @@
-const CACHE='sistema-evolucao-shell-v14';
+const CACHE='sistema-evolucao-shell-v15';
 const CORE=[
   './','./index.html','./styles.css','./screens.css','./app.js',
   './volume-engine.js','./volume-engine.css','./prescription-engine.js','./prescription-engine.css',
@@ -33,9 +33,9 @@ async function fetchBounded(request){
   let timer;
   try{
     return await Promise.race([
-      fetch(request,{signal:controller.signal}),
+      fetch(request,{signal:controller.signal,cache:'no-cache'}),
       new Promise((_,reject)=>{
-        timer=setTimeout(()=>{controller.abort();reject(new Error('Network timeout'));},4000);
+        timer=setTimeout(()=>{controller.abort();reject(new Error('Network timeout'));},3000);
       })
     ]);
   }finally{clearTimeout(timer);}
@@ -50,13 +50,15 @@ self.addEventListener('fetch',event=>{
 
   event.respondWith((async()=>{
     const cache=await caches.open(CACHE);
-    const cached=await cache.match(request.mode==='navigate'?'./index.html':request);
-    if(cached)return cached;
+    const cacheKey=request.mode==='navigate'?'./index.html':request;
     try{
       const response=await fetchBounded(request);
       if(!response.ok)throw new Error('Network response unavailable');
+      await cache.put(cacheKey,response.clone());
       return response;
     }catch{
+      const cached=await cache.match(cacheKey);
+      if(cached)return cached;
       return new Response('Não foi possível carregar o Sistema. Verifique sua conexão e tente novamente.',{
         status:503,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}
       });
