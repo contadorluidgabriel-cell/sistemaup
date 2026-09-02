@@ -57,8 +57,14 @@ const assert = require('node:assert/strict');
   });
 
   await page.goto('http://127.0.0.1:4173/#plano',{waitUntil:'domcontentloaded'});
+  await page.waitForTimeout(900);
+  await page.waitForFunction(()=>{
+    try{return location.hash==='#plano'&&JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null')?.generator==='system-v3-preferred-split';}
+    catch{return false;}
+  });
+  await page.waitForFunction(()=>window.SistemaSeriesPrescription?.isReady===true);
   await page.waitForSelector('#openPlanEditor');
-  await page.evaluate(()=>document.getElementById('openPlanEditor')?.click());
+  await page.click('#openPlanEditor');
   await page.waitForSelector('#planEditorModal:not([hidden]) .sp-editor');
 
   const exercise=page.locator('#planEditorBody .pe-session').first().locator('.pe-exercise').first();
