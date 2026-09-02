@@ -4,6 +4,7 @@
   const GENERATED_KEY='sistemaEvolucao.trainingPlan.generated.v3';
   const SESSION_KEY='sistemaEvolucao.currentSessionIndex.v1';
   const SPLIT_KEY='sistemaEvolucao.splitPreference.v1';
+  const BACKUP_KEY='sistemaEvolucao.trainingPlan.beforeGroupSplit.v1';
   const PREFERRED_SPLIT='pull-push-lower-core';
   const GENERATOR='system-v3-group-split-flex';
 
@@ -17,6 +18,12 @@
     {id:'core_reverse_crunch',name:'Abdominal reverso',primary:'Core',secondary:[],pattern:'flexão de tronco',type:'core',requires:[],sets:2,reps:'10–15',rir:'2–3',rest:'45–75 s'},
     {id:'core_side_plank',name:'Prancha lateral',primary:'Core',secondary:[],pattern:'anti-flexão lateral',type:'core',requires:[],sets:2,reps:'20–40 s / lado',rir:'2–3',rest:'45–75 s'}
   ];
+
+  const DOMAINS={
+    pull:new Set(['Costas','Bíceps']),
+    push:new Set(['Peito','Ombros','Tríceps']),
+    lower:new Set(['Quadríceps','Posteriores','Glúteos','Panturrilhas','Core'])
+  };
 
   function preference(){
     const saved=read(SPLIT_KEY,null);
@@ -76,6 +83,22 @@
     if(count===4)return ['pull','push','lower',extras[0]];
     if(count===5)return ['pull','push','lower',extras[0],extras[1]];
     return ['pull','push','lower','pull','push','lower'].slice(0,count);
+  }
+
+  function sessionDomain(session){
+    const muscles=(session?.exercises||[]).map(ex=>ex.primary).filter(Boolean);
+    if(!muscles.length)return null;
+    for(const [kind,allowed] of Object.entries(DOMAINS)){
+      if(muscles.every(muscle=>allowed.has(muscle)))return kind;
+    }
+    return null;
+  }
+
+  function isGroupedPlan(plan){
+    if(!plan?.sessions?.length)return false;
+    if(plan.sessions.some(session=>!sessionDomain(session)))return false;
+    const labels=plan.sessions.map(session=>String(session.label||'').toLowerCase()).join(' ');
+    return !labels.includes('corpo inteiro')&&!labels.includes('superior');
   }
 
   function targetMap(base){
@@ -151,12 +174,13 @@
       generator:GENERATOR,
       generatedAt:new Date().toISOString(),
       splitPreference:PREFERRED_SPLIT,
-      splitArchitectureVersion:'group-frequency-v1',
+      splitArchitectureVersion:'group-frequency-v2',
       architecture:{sessions:count,reason:`Divisão por grupos escolhida pelo jogador e distribuída em ${count} sessões sem misturar puxar, empurrar e inferiores na mesma missão.`},
       sessions,
       equivalentVolume:totals,
       unmetTargets,
-      userEdited:false
+      userEdited:false,
+      migratedFromLegacyStructure:!isGroupedPlan(base)
     };
   }
 
@@ -179,14 +203,15 @@
     const count=base.sessions.length;
     updateNote(count);
     if(count<3)return false;
-    if(base.generator===GENERATOR&&base.splitArchitectureVersion==='group-frequency-v1'&&base.sessions.length===count)return true;
-    if(base.userEdited&&base.splitPreference===PREFERRED_SPLIT)return true;
+    if(base.generator===GENERATOR&&base.splitArchitectureVersion==='group-frequency-v2'&&base.sessions.length===count&&isGroupedPlan(base))return true;
+    if(base.userEdited&&base.splitPreference===PREFERRED_SPLIT&&isGroupedPlan(base))return true;
     const next=buildPlan(base,profile,engine);
     if(!next)return false;
+    if(!isGroupedPlan(base))write(BACKUP_KEY,{savedAt:new Date().toISOString(),plan:base});
     write(GENERATED_KEY,next);
     write(PLAN_KEY,next);
     localStorage.setItem(SESSION_KEY,'0');
-    window.dispatchEvent(new CustomEvent('sistema:group-split-applied',{detail:{sessions:count}}));
+    window.dispatchEvent(new CustomEvent('sistema:group-split-applied',{detail:{sessions:count,migrated:!isGroupedPlan(base)}}));
     if(reload){toast(`Divisão por grupos aplicada em ${count} sessões.`);setTimeout(()=>location.reload(),220);}
     return true;
   }
@@ -207,6 +232,6 @@
     });
   }
 
-  window.SistemaGroupSplit={apply,patternFor,isReady:true};
+  window.SistemaGroupSplit={apply,patternFor,isGroupedPlan,isReady:true};
   boot();
 })();
