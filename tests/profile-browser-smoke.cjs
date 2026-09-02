@@ -11,10 +11,14 @@ const assert = require('node:assert/strict');
   await page.addInitScript(()=>{
     localStorage.setItem('sistemaEvolucao.onboarding.v1',JSON.stringify({testOnly:true,version:1}));
   });
-  await page.goto('http://127.0.0.1:4173/#perfil',{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('#profileForm');
-  await page.waitForFunction(()=>document.getElementById('view-perfil')?.hidden===false);
 
+  await page.goto('http://127.0.0.1:4173/#missao',{waitUntil:'domcontentloaded'});
+  await page.waitForSelector('#startBtn[data-state="blocked"]');
+  await page.click('#startBtn[data-state="blocked"]');
+  await page.waitForFunction(()=>location.hash==='#perfil'&&document.getElementById('view-perfil')?.hidden===false);
+  assert.equal(await page.locator('.nav button[data-target="perfil"]').getAttribute('aria-current'),'page','profile nav was not activated');
+
+  await page.waitForSelector('#profileForm');
   await page.fill('#profileName','Perfil QA');
   await page.selectOption('#profileGoal',{label:'Hipertrofia'});
   await page.selectOption('#profileFrequency','3');
@@ -51,6 +55,6 @@ const assert = require('node:assert/strict');
   assert.equal(await page.locator('input[name="equipment"][value="Halteres"]').isChecked(),true,'equipment did not survive reload');
 
   if(pageErrors.length)throw new Error(`Page errors: ${pageErrors.join(' | ')}`);
-  console.log('Profile smoke passed: manual form save, Plan V3 generation and reload persistence.');
+  console.log('Profile smoke passed: blocked CTA routing, manual save, Plan V3 generation and reload persistence.');
   await browser.close();
 })().catch(error=>{console.error(error);process.exit(1);});
