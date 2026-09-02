@@ -1,6 +1,7 @@
 (()=>{
   let flashTimer=null;
   let completionWasOpen=false;
+  let observerRefreshQueued=false;
 
   function vibrate(pattern){
     try{if('vibrate' in navigator)navigator.vibrate(pattern);}catch{}
@@ -25,27 +26,6 @@
     return location.hash.replace('#','').toLowerCase();
   }
 
-  function activateProfileView(){
-    const onboarding=document.getElementById('appOnboarding');
-    if(onboarding&&!onboarding.hidden)onboarding.hidden=true;
-    document.body.style.overflow='';
-
-    document.querySelectorAll('.view[data-view]').forEach(view=>{
-      const active=view.dataset.view==='perfil';
-      view.hidden=!active;
-      view.classList.toggle('active-view',active);
-    });
-    document.querySelectorAll('.nav button[data-target]').forEach(button=>{
-      const active=button.dataset.target==='perfil';
-      button.classList.toggle('active',active);
-      button.setAttribute('aria-current',active?'page':'false');
-    });
-
-    if(location.hash!=='#perfil')history.pushState({view:'perfil'},'','#perfil');
-    document.title='Perfil · Sistema de Evolução';
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-
   function closeOnboardingForRoute(){
     if(routeTarget()!=='perfil')return;
     const onboarding=document.getElementById('appOnboarding');
@@ -53,17 +33,7 @@
       onboarding.hidden=true;
       document.body.style.overflow='';
     }
-    const profile=document.getElementById('view-perfil');
-    if(profile?.hidden)activateProfileView();
   }
-
-  window.addEventListener('click',event=>{
-    const blockedProfileCta=event.target?.closest?.('#startBtn[data-state="blocked"]');
-    if(!blockedProfileCta)return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    activateProfileView();
-  },true);
 
   function ensureTechnicalDisclosure(){
     [
@@ -103,8 +73,10 @@
       const rank=topbar.querySelector('.app-rank-chip');
       if(rank)rank.insertAdjacentElement('beforebegin',state);else topbar.appendChild(state);
     }
-    state.classList.toggle('offline',!navigator.onLine);
-    state.textContent=navigator.onLine?'ONLINE':'OFFLINE';
+    const offline=!navigator.onLine;
+    state.classList.toggle('offline',offline);
+    const label=offline?'OFFLINE':'ONLINE';
+    if(state.textContent!==label)state.textContent=label;
   }
 
   function currentCardCompleted(card){
@@ -148,12 +120,21 @@
     completionWasOpen=isOpen;
   }
 
-  const observer=new MutationObserver(()=>{
+  function refreshObservedUI(){
+    observerRefreshQueued=false;
     ensureTechnicalDisclosure();
     ensureConnectionState();
     watchCompletion();
     closeOnboardingForRoute();
-  });
+  }
+
+  function scheduleObservedUIRefresh(){
+    if(observerRefreshQueued)return;
+    observerRefreshQueued=true;
+    requestAnimationFrame(refreshObservedUI);
+  }
+
+  const observer=new MutationObserver(scheduleObservedUIRefresh);
   observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});
   window.addEventListener('hashchange',()=>setTimeout(closeOnboardingForRoute,0));
   window.addEventListener('online',()=>{ensureConnectionState();flash('CONEXÃO RESTAURADA','success');});
