@@ -85,6 +85,17 @@
     return rows.length>0&&rows.every(row=>row.classList.contains('completed'));
   }
 
+  function ensureSeriesPrescription(){
+    if(window.__seriesPrescriptionLoading||document.querySelector('script[data-series-prescription]'))return;
+    window.__seriesPrescriptionLoading=true;
+    const script=document.createElement('script');
+    script.src='series-prescription.js';
+    script.dataset.seriesPrescription='true';
+    script.onload=()=>{window.__seriesPrescriptionLoading=false;};
+    script.onerror=()=>{window.__seriesPrescriptionLoading=false;};
+    document.body.appendChild(script);
+  }
+
   document.addEventListener('click',event=>{
     const routeControl=event.target.closest('.nav button[data-target],[data-go]');
     const target=routeControl?.dataset.target||routeControl?.dataset.go;
@@ -126,6 +137,7 @@
     ensureConnectionState();
     watchCompletion();
     closeOnboardingForRoute();
+    ensureSeriesPrescription();
   }
 
   function scheduleObservedUIRefresh(){
@@ -143,5 +155,6 @@
   ensureTechnicalDisclosure();
   ensureConnectionState();
   watchCompletion();
+  ensureSeriesPrescription();
   setTimeout(closeOnboardingForRoute,180);
 })();
