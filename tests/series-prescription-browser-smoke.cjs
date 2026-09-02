@@ -52,10 +52,13 @@ const assert = require('node:assert/strict');
     try{return JSON.parse(localStorage.getItem('sistemaEvolucao.trainingPlan.v1')||'null')?.generator==='system-v3-preferred-split';}
     catch{return false;}
   });
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(650);
 
   await page.evaluate(()=>location.hash='#plano');
-  await page.waitForSelector('#openPlanEditor');
-  await page.click('#openPlanEditor');
+  await page.waitForFunction(()=>location.hash==='#plano'&&document.getElementById('openPlanEditor')?.isConnected);
+  await page.waitForTimeout(250);
+  await page.evaluate(()=>document.getElementById('openPlanEditor')?.click());
   await page.waitForSelector('#planEditorModal:not([hidden]) .sp-editor');
 
   const exercise=page.locator('#planEditorBody .pe-session').first().locator('.pe-exercise').first();
